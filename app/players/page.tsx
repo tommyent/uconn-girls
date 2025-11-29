@@ -251,6 +251,18 @@ export default async function PlayersPage() {
                       ? `${((made / att) * 100).toFixed(1)}%`
                       : null;
 
+                  const formatValue = (
+                    val: any,
+                    opts: { int?: boolean; decimals?: number } = {}
+                  ) => {
+                    if (val === null || val === undefined || val === "") return "—";
+                    const num = Number(val);
+                    if (!Number.isFinite(num)) return String(val);
+                    if (opts.int) return Math.round(num).toString();
+                    const d = opts.decimals ?? 1;
+                    return num.toFixed(d).replace(/\.0+$/, "");
+                  };
+
                   const stats = {
                     ppg:
                       avg(agg?.pts, gpFromAgg) ??
@@ -283,16 +295,16 @@ export default async function PlayersPage() {
                   };
 
                   const statEntries = [
-                    { label: "PPG", value: stats.ppg },
-                    { label: "RPG", value: stats.rpg },
-                    { label: "APG", value: stats.apg },
-                    { label: "MPG", value: stats.mpg },
-                    { label: "GP", value: stats.gp },
-                    { label: "SPG", value: stats.spg },
-                    { label: "BPG", value: stats.bpg },
-                    { label: "FG%", value: stats.fg },
-                    { label: "3P%", value: stats.three },
-                    { label: "FT%", value: stats.ft },
+                    { label: "PPG", value: formatValue(stats.ppg) },
+                    { label: "RPG", value: formatValue(stats.rpg) },
+                    { label: "APG", value: formatValue(stats.apg) },
+                    { label: "MPG", value: formatValue(stats.mpg) },
+                    { label: "GP", value: formatValue(stats.gp, { int: true }) },
+                    { label: "SPG", value: formatValue(stats.spg) },
+                    { label: "BPG", value: formatValue(stats.bpg) },
+                    { label: "FG%", value: stats.fg ?? "—" },
+                    { label: "3P%", value: stats.three ?? "—" },
+                    { label: "FT%", value: stats.ft ?? "—" },
                   ].filter((s) => s.value !== null && s.value !== undefined && s.value !== "");
 
                   return (
@@ -385,11 +397,18 @@ export default async function PlayersPage() {
                         </div>
 
                         {statEntries.length > 0 && (
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-6">
                             {statEntries.map((s) => (
-                              <div key={s.label} className="rounded-lg bg-muted/40 p-3 text-center">
-                                <p className="text-sm text-muted-foreground">{s.label}</p>
-                                <p className="text-xl font-bold text-foreground">{s.value}</p>
+                              <div
+                                key={s.label}
+                                className="rounded-lg bg-muted/40 p-3 text-center"
+                              >
+                                <p className="text-xs font-semibold text-muted-foreground tracking-wide">
+                                  {s.label}
+                                </p>
+                                <p className="text-2xl font-semibold text-foreground">
+                                  {s.value}
+                                </p>
                               </div>
                             ))}
                           </div>
