@@ -732,8 +732,15 @@ export default function HistoryPage() {
                                         : "transparent",
                                   }}
                                 >
-                                  <span className="text-foreground break-words">
-                                    {p.name}
+                                  <span className="text-foreground break-words leading-tight">
+                                    {(() => {
+                                      if (!p.name) return "";
+                                      const parts = String(p.name).split(" ");
+                                      if (parts.length > 1) {
+                                        return `${parts[0]}\n${parts.slice(1).join(" ")}`;
+                                      }
+                                      return p.name;
+                                    })()}
                                   </span>
                                   <span className="text-center">
                                     {p.pts ?? "—"}
