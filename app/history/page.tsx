@@ -24,6 +24,7 @@ export default function HistoryPage() {
     Record<string, Record<string, any[]>>
   >({});
   const [scoreboardLoading, setScoreboardLoading] = useState(false);
+  const [activeTabs, setActiveTabs] = useState<Record<string, string>>({});
 
   const years = Array.from({ length: 5 }, (_, i) => currentSeasonYear - i);
 
@@ -427,176 +428,239 @@ export default function HistoryPage() {
         <div className="space-y-8">
           {/* Completed Games */}
           {completedGames.length > 0 && (
-            <div>
-              <h2 className="text-3xl font-bold mb-6">Completed Games</h2>
-              <div className="space-y-4">
-                {[...completedGames].reverse().map((event: any) => {
-                  const result = getGameResult(event);
-                  if (!result) return null;
+            <div className="space-y-4">
+              <h2 className="text-3xl font-bold">Completed Games</h2>
+              {[...completedGames].reverse().map((event: any) => {
+                const result = getGameResult(event);
+                if (!result) return null;
 
-                  return (
-                    <Card
-                      key={event.id}
-                      className={
-                        result.outcome === "win"
-                          ? "border-green-500/50"
-                          : result.outcome === "loss"
-                          ? "border-red-500/50"
-                          : "border-border"
-                      }
-                    >
-                      <CardHeader>
-                        <div className="flex flex-col gap-2">
-                          <span className="text-muted-foreground text-base">
-                            {new Date(event.date).toLocaleDateString("en-US", {
-                              weekday: "long",
-                              month: "long",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
-                          </span>
-                          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                            <div className="flex flex-wrap items-center gap-3">
-                              <Badge
-                                variant={
-                                  result.outcome === "win"
-                                    ? "default"
-                                    : result.outcome === "loss"
-                                    ? "destructive"
-                                    : "secondary"
-                                }
-                              >
-                                {result.outcome === "win"
-                                  ? "W"
-                                  : result.outcome === "loss"
-                                  ? "L"
-                                  : "TBD"}
+                const competition = event.competitions?.[0];
+                const homeTeam = competition?.competitors?.find(
+                  (c: any) => c.homeAway === "home"
+                );
+                const awayTeam = competition?.competitors?.find(
+                  (c: any) => c.homeAway === "away"
+                );
+
+                const teamStatsLookup = (teamId: string) => {
+                  const stats =
+                    result.boxTeams?.find((t: any) => t.team?.id === teamId)
+                      ?.statistics || [];
+                  const find = (...keys: string[]) => {
+                    const stat = stats.find((s: any) => keys.includes(s.name));
+                    return stat?.displayValue ?? stat?.value ?? "—";
+                  };
+                  return {
+                    fg: find("fieldGoalPct", "fgPct"),
+                    three: find(
+                      "threePointFieldGoalPct",
+                      "threePointPct",
+                      "3PtPct"
+                    ),
+                    ft: find("freeThrowPct", "ftPct"),
+                    reb: find("totalRebounds"),
+                    ast: find("assists"),
+                    to: find("turnovers", "totalTurnovers"),
+                  };
+                };
+
+                const homeStats = homeTeam?.team?.id
+                  ? teamStatsLookup(homeTeam.team.id)
+                  : null;
+                const awayStats = awayTeam?.team?.id
+                  ? teamStatsLookup(awayTeam.team.id)
+                  : null;
+
+                const homePlayers = homeTeam?.team?.id
+                  ? getPlayerLines(event.id, homeTeam.team.id)
+                  : [];
+                const awayPlayers = awayTeam?.team?.id
+                  ? getPlayerLines(event.id, awayTeam.team.id)
+                  : [];
+
+                return (
+                  <Card
+                    key={event.id}
+                    className="overflow-hidden bg-[#0c0c15] border border-border/50 shadow-lg"
+                  >
+                    <CardHeader className="p-0">
+                      <div className="bg-gradient-to-r from-primary/80 to-primary/40 px-4 py-6 text-white">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            {homeTeam?.team?.logos?.[0]?.href && (
+                              <img
+                                src={homeTeam.team.logos[0].href}
+                                alt={homeTeam.team.displayName}
+                                className="h-10 w-10 object-contain"
+                              />
+                            )}
+                            <div className="space-y-1">
+                              <p className="text-xs tracking-wide font-semibold uppercase">
+                                {homeTeam?.team?.shortDisplayName || "HOME"}
+                              </p>
+                              <Badge variant="secondary" className="text-xs">
+                                HOME
                               </Badge>
-                              <Badge variant="outline">
-                                {result.homeAway === "home" ? "HOME" : "AWAY"}
-                              </Badge>
-                              <CardTitle className="text-2xl">
-                                vs {result.opponent.displayName}
-                              </CardTitle>
-                            </div>
-                            <div className="md:text-right md:min-w-[140px]">
-                              {result.hasScores ? (
-                                <div className="text-3xl font-bold md:text-4xl">
-                                  {result.uconnScore} - {result.opponentScore}
-                                </div>
-                              ) : (
-                                <div className="text-lg text-muted-foreground">
-                                  Score unavailable
-                                </div>
-                              )}
                             </div>
                           </div>
-
-                          {result.boxTeams && (
-                            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                              {result.boxTeams.map((teamBox: any) => {
-                                const stats = teamBox.statistics || [];
-                                const lookup = (names: string[]) => {
-                                  const found = stats.find((s: any) =>
-                                    names.includes(s.name)
-                                  );
-                                  return found?.displayValue ?? found?.value ?? "—";
-                                };
-                                return (
-                                  <div
-                                    key={teamBox.team?.id}
-                                    className="rounded-lg border border-border/60 p-3"
-                                  >
-                                    <div className="flex items-center justify-between mb-2">
-                                      <span className="font-semibold text-foreground">
-                                        {teamBox.team?.abbreviation || teamBox.team?.displayName}
-                                      </span>
-                                      <Badge variant="outline">
-                                        {teamBox.homeAway?.toUpperCase() || ""}
-                                      </Badge>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2 text-muted-foreground">
-                                      <span>FG%: {lookup(["fieldGoalPct", "fgPct"])}</span>
-                                      <span>3P%: {lookup(["threePointFieldGoalPct", "threePointPct", "3PtPct"])}</span>
-                                      <span>FT%: {lookup(["freeThrowPct", "ftPct"])}</span>
-                                      <span>REB: {lookup(["totalRebounds"])}</span>
-                                      <span>AST: {lookup(["assists"])}</span>
-                                      <span>TO: {lookup(["turnovers", "totalTurnovers"])}</span>
-                                    </div>
-                                  </div>
-                                );
-                              })}
+                          <div className="text-center">
+                            <p className="text-4xl md:text-5xl font-bold text-white">
+                              {result.uconnScore} - {result.opponentScore}
+                            </p>
+                            <p className="text-sm font-semibold uppercase mt-1">
+                              {competition?.status?.type?.shortDetail || "Final"}
+                            </p>
+                            <p className="text-xs">
+                              {new Date(event.date).toLocaleDateString(
+                                "en-US",
+                                {
+                                  weekday: "short",
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                }
+                              )}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="text-right space-y-1">
+                              <p className="text-xs tracking-wide font-semibold uppercase">
+                                {awayTeam?.team?.shortDisplayName || "AWAY"}
+                              </p>
+                              <Badge variant="secondary" className="text-xs">
+                                AWAY
+                              </Badge>
                             </div>
-                          )}
-
-                          {result.boxPlayers && (
-                            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                              {[event.competitions?.[0]?.competitors?.find((c: any) => c.homeAway === "home"), event.competitions?.[0]?.competitors?.find((c: any) => c.homeAway === "away")].map((team) => {
-                                if (!team?.team?.id) return null;
-                                const players = getPlayerLines(
-                                  event.id,
-                                  team.team.id
-                                );
-                                if (!players || players.length === 0) return null;
-                                const topPlayers = [...players].sort(
-                                  (a: any, b: any) =>
-                                    (Number(b.pts) || 0) - (Number(a.pts) || 0)
-                                );
-                                return (
-                                  <div
-                                    key={team.team.id}
-                                    className="rounded-lg border border-border/60 p-3"
-                                  >
-                                    <div className="flex items-center justify-between mb-2">
-                                      <span className="font-semibold text-foreground">
-                                        {team.team.abbreviation}
-                                      </span>
-                                      <Badge variant="outline">
-                                        {team.homeAway?.toUpperCase()}
-                                      </Badge>
-                                    </div>
-                                    <div className="grid grid-cols-5 gap-2 text-muted-foreground text-xs font-semibold mb-1">
-                                      <span>Player</span>
-                                      <span className="text-center">PTS</span>
-                                      <span className="text-center">REB</span>
-                                      <span className="text-center">AST</span>
-                                      <span className="text-center">MIN</span>
-                                    </div>
-                                    <div className="space-y-1">
-                                      {topPlayers.map((p: any) => (
-                                        <div
-                                          key={p.id}
-                                          className="grid grid-cols-5 gap-2 items-center"
-                                        >
-                                          <span className="truncate text-foreground">
-                                            {p.name}
-                                          </span>
-                                          <span className="text-center">
-                                            {p.pts ?? "—"}
-                                          </span>
-                                          <span className="text-center">
-                                            {p.reb ?? "—"}
-                                          </span>
-                                          <span className="text-center">
-                                            {p.ast ?? "—"}
-                                          </span>
-                                          <span className="text-center">
-                                            {p.mins ?? "—"}
-                                          </span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
+                            {awayTeam?.team?.logos?.[0]?.href && (
+                              <img
+                                src={awayTeam.team.logos[0].href}
+                                alt={awayTeam.team.displayName}
+                                className="h-10 w-10 object-contain"
+                              />
+                            )}
+                          </div>
                         </div>
-                      </CardHeader>
-                    </Card>
-                  );
-                })}
-              </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 space-y-4">
+                      {(homeStats || awayStats) && (
+                        <div className="rounded-xl border border-border/50 bg-card/50 p-4 space-y-2">
+                          <p className="text-sm font-semibold text-foreground mb-1">
+                            Team Comparison
+                          </p>
+                          <div className="grid grid-cols-3 text-sm text-muted-foreground">
+                            <span className="text-left">{homeStats?.fg ?? "—"}</span>
+                            <span className="text-center text-foreground font-medium">FG%</span>
+                            <span className="text-right">{awayStats?.fg ?? "—"}</span>
+                          </div>
+                          <div className="grid grid-cols-3 text-sm text-muted-foreground">
+                            <span className="text-left">{homeStats?.three ?? "—"}</span>
+                            <span className="text-center text-foreground font-medium">3P%</span>
+                            <span className="text-right">{awayStats?.three ?? "—"}</span>
+                          </div>
+                          <div className="grid grid-cols-3 text-sm text-muted-foreground">
+                            <span className="text-left">{homeStats?.ft ?? "—"}</span>
+                            <span className="text-center text-foreground font-medium">FT%</span>
+                            <span className="text-right">{awayStats?.ft ?? "—"}</span>
+                          </div>
+                          <div className="grid grid-cols-3 text-sm text-muted-foreground">
+                            <span className="text-left">{homeStats?.reb ?? "—"}</span>
+                            <span className="text-center text-foreground font-medium">REB</span>
+                            <span className="text-right">{awayStats?.reb ?? "—"}</span>
+                          </div>
+                          <div className="grid grid-cols-3 text-sm text-muted-foreground">
+                            <span className="text-left">{homeStats?.ast ?? "—"}</span>
+                            <span className="text-center text-foreground font-medium">AST</span>
+                            <span className="text-right">{awayStats?.ast ?? "—"}</span>
+                          </div>
+                          <div className="grid grid-cols-3 text-sm text-muted-foreground">
+                            <span className="text-left">{homeStats?.to ?? "—"}</span>
+                            <span className="text-center text-foreground font-medium">TO</span>
+                            <span className="text-right">{awayStats?.to ?? "—"}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {(homePlayers.length > 0 || awayPlayers.length > 0) && (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-4 text-sm font-semibold">
+                            <button
+                              className={`pb-2 border-b-2 ${
+                                (activeTabs[event.id] || homeTeam?.team?.id) ===
+                                homeTeam?.team?.id
+                                  ? "border-primary text-foreground"
+                                  : "border-transparent text-muted-foreground"
+                              }`}
+                              onClick={() =>
+                                setActiveTabs((prev) => ({
+                                  ...prev,
+                                  [event.id]: homeTeam?.team?.id,
+                                }))
+                              }
+                            >
+                              {homeTeam?.team?.shortDisplayName || "Home"}
+                            </button>
+                            <button
+                              className={`pb-2 border-b-2 ${
+                                (activeTabs[event.id] || homeTeam?.team?.id) ===
+                                awayTeam?.team?.id
+                                  ? "border-primary text-foreground"
+                                  : "border-transparent text-muted-foreground"
+                              }`}
+                              onClick={() =>
+                                setActiveTabs((prev) => ({
+                                  ...prev,
+                                  [event.id]: awayTeam?.team?.id,
+                                }))
+                              }
+                            >
+                              {awayTeam?.team?.shortDisplayName || "Away"}
+                            </button>
+                          </div>
+                          <div className="rounded-xl border border-border/60 bg-card/60 p-3 text-xs text-muted-foreground">
+                            <div className="grid grid-cols-5 gap-2 font-semibold mb-2">
+                              <span className="text-left">Player</span>
+                              <span className="text-center">PTS</span>
+                              <span className="text-center">REB</span>
+                              <span className="text-center">AST</span>
+                              <span className="text-center">MIN</span>
+                            </div>
+                            <div className="space-y-1">
+                              {(
+                                (activeTabs[event.id] || homeTeam?.team?.id) ===
+                                homeTeam?.team?.id
+                                  ? homePlayers
+                                  : awayPlayers
+                              ).map((p: any) => (
+                                <div
+                                  key={p.id}
+                                  className="grid grid-cols-5 gap-2 items-center"
+                                >
+                                  <span className="truncate text-foreground">
+                                    {p.name}
+                                  </span>
+                                  <span className="text-center">
+                                    {p.pts ?? "—"}
+                                  </span>
+                                  <span className="text-center">
+                                    {p.reb ?? "—"}
+                                  </span>
+                                  <span className="text-center">
+                                    {p.ast ?? "—"}
+                                  </span>
+                                  <span className="text-center">
+                                    {p.mins ?? "—"}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
 
