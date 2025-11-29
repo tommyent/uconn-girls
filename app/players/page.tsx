@@ -1,4 +1,4 @@
-import { getTeamRoster, getUConnTeamInfo } from "@/lib/espn-api";
+import { getTeamRoster, getUConnTeamInfo, getPlayerStats } from "@/lib/espn-api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users } from "lucide-react";
@@ -64,18 +64,39 @@ export default async function PlayersPage() {
                       ? player.height
                       : null);
 
-                  const allStats =
+                  // Merge inline roster stats with fetched season stats
+                  const inlineStats =
                     player.statistics?.[0]?.stats ??
                     player.statistics?.[0]?.splits?.categories?.flatMap(
                       (cat: any) => cat.stats || []
                     ) ??
                     [];
 
+                  const fetchedStats =
+                    playerStatsMap[player.id]?.categories
+                      ?.flatMap((cat: any) => cat.stats || [])
+                      ?.concat(
+                        playerStatsMap[player.id]?.splits?.categories?.flatMap(
+                          (cat: any) => cat.stats || []
+                        ) || []
+                      ) || [];
+
+                  const allStats = [...inlineStats, ...fetchedStats];
+
                   const getStat = (...keys: string[]) => {
                     const stat = allStats.find((s: any) =>
                       keys.includes(s.name)
                     );
                     return stat?.displayValue || stat?.value || null;
+                  };
+
+                  const formatPct = (val: any) => {
+                    if (val === null || val === undefined || val === "") return null;
+                    const num = Number(val);
+                    if (Number.isFinite(num)) {
+                      return `${num}%`;
+                    }
+                    return String(val);
                   };
 
                   const stats = {
@@ -86,9 +107,9 @@ export default async function PlayersPage() {
                     gp: getStat("gamesPlayed", "games", "appearances"),
                     spg: getStat("avgSteals", "stealsPerGame", "spg", "steals"),
                     bpg: getStat("avgBlocks", "blocksPerGame", "bpg", "blocks"),
-                    fg: getStat("fieldGoalPct", "fgPct"),
-                    three: getStat("threePointPct", "threePct", "3PtPct"),
-                    ft: getStat("freeThrowPct", "ftPct"),
+                    fg: formatPct(getStat("fieldGoalPct", "fgPct")),
+                    three: formatPct(getStat("threePointPct", "threePointFieldGoalPct", "threePct", "3PtPct")),
+                    ft: formatPct(getStat("freeThrowPct", "ftPct")),
                   };
 
                   const statEntries = [
@@ -225,3 +246,21 @@ export default async function PlayersPage() {
     </main>
   );
 }
+  // Fetch per-player season stats (best effort)
+  const playerStatsEntries = await Promise.all(
+    athletes.map(async (ath: any) => {
+      try {
+        const stats = await getPlayerStats(ath.id);
+        return { id: ath.id, stats };
+      } catch {
+        return { id: ath.id, stats: null };
+      }
+    })
+  );
+  const playerStatsMap = playerStatsEntries.reduce<Record<string, any>>(
+    (acc, entry) => {
+      if (entry.stats) acc[entry.id] = entry.stats;
+      return acc;
+    },
+    {}
+  );

@@ -98,3 +98,13 @@ export async function getGameSummary(gameId: string) {
   }
   return response.json();
 }
+
+export async function getPlayerStats(playerId: string) {
+  // ESPN athlete statistics endpoint for season averages
+  const url = `https://sports.core.api.espn.com/apis/v2/sports/basketball/womens-college-basketball/athletes/${playerId}/statistics`;
+  const response = await fetch(url, { next: { revalidate: 3600 } });
+  if (!response.ok) {
+    throw new Error('Failed to fetch player stats');
+  }
+  return response.json();
+}
