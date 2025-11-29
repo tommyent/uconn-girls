@@ -7,6 +7,36 @@ import { Button } from "@/components/ui/button";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { getGameSummary } from "@/lib/espn-api";
 
+const CACHE_TTL_MS = 1000 * 60 * 30; // 30 minutes
+
+const readCache = <T,>(key: string): T | null => {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed?.exp && parsed.exp < Date.now()) {
+      window.localStorage.removeItem(key);
+      return null;
+    }
+    return parsed?.data as T;
+  } catch {
+    return null;
+  }
+};
+
+const writeCache = (key: string, data: any) => {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(
+      key,
+      JSON.stringify({ exp: Date.now() + CACHE_TTL_MS, data })
+    );
+  } catch {
+    // ignore quota/availability errors
+  }
+};
+
 const getCurrentSeasonYear = () => {
   const today = new Date();
   // NCAA season spans fall-spring; before July we are still in the prior season
@@ -68,8 +98,15 @@ export default function HistoryPage() {
   const years = Array.from({ length: 5 }, (_, i) => currentSeasonYear - i);
 
   const fetchSchedule = async (year: number) => {
-    setLoading(true);
-    setSchedule(null);
+    const cacheKey = `schedule-${year}`;
+    const cached = readCache<any>(cacheKey);
+    if (cached) {
+      setSchedule(cached);
+      setLoading(false);
+    } else {
+      setLoading(true);
+      setSchedule(null);
+    }
     try {
       const seasonParam = year + 1; // ESPN season param is the end year
       const response = await fetch(
@@ -80,7 +117,9 @@ export default function HistoryPage() {
         return;
       }
       const data = await response.json();
-      setSchedule(data ?? { events: [] });
+      const safeData = data ?? { events: [] };
+      setSchedule(safeData);
+      writeCache(cacheKey, safeData);
     } catch (error) {
       console.error("Error fetching schedule:", error);
       setSchedule({ events: [] });
@@ -91,6 +130,17 @@ export default function HistoryPage() {
 
   useEffect(() => {
     fetchSchedule(selectedYear);
+  }, [selectedYear]);
+
+  useEffect(() => {
+    const cachedSummaries = readCache<Record<string, any>>(
+      `summaries-${selectedYear}`
+    );
+    if (cachedSummaries) setSummaries(cachedSummaries);
+    const cachedPlayers = readCache<Record<string, any>>(
+      `scoreboardPlayers-${selectedYear}`
+    );
+    if (cachedPlayers) setScoreboardPlayers(cachedPlayers);
   }, [selectedYear]);
 
   // Fetch per-game summaries (boxscore stats)
@@ -124,6 +174,7 @@ export default function HistoryPage() {
           }
         });
         setSummaries(next);
+        writeCache(`summaries-${selectedYear}`, next);
       } finally {
         setSummaryLoading(false);
       }
@@ -196,6 +247,7 @@ export default function HistoryPage() {
           });
         });
         setScoreboardPlayers(next);
+        writeCache(`scoreboardPlayers-${selectedYear}`, next);
       } finally {
         setScoreboardLoading(false);
       }
