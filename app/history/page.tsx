@@ -592,7 +592,7 @@ export default function HistoryPage() {
                     <Card className="bg-transparent border-0 shadow-none overflow-visible">
                       <CardContent className="p-0 space-y-3">
                         {(homeStats || awayStats) && (
-                          <div className="bg-card text-card-foreground flex flex-col gap-4 rounded-xl border border-border/40 p-4 shadow-sm">
+                          <div className="bg-card text-card-foreground flex flex-col gap-4 rounded-xl border border-border/30 p-4 shadow-sm">
                             <p className="text-sm font-semibold text-foreground mb-1">
                               Team Comparison
                             </p>
@@ -701,7 +701,7 @@ export default function HistoryPage() {
                               {awayTeam?.team?.shortDisplayName || "Away"}
                             </button>
                           </div>
-                          <div className="bg-card text-card-foreground flex flex-col gap-3 rounded-xl border border-border/40 p-4 shadow-sm text-xs text-muted-foreground">
+                          <div className="bg-card text-card-foreground flex flex-col gap-3 rounded-xl border border-border/30 p-4 shadow-sm text-xs text-muted-foreground">
                             <div className="grid grid-cols-5 gap-2 font-semibold mb-2">
                               <span className="text-left">Player</span>
                               <span className="text-center">PTS</span>
