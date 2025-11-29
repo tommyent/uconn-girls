@@ -753,9 +753,10 @@ export default function HistoryPage() {
                             </div>
                           </div>
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
                 );
               })}
             </div>
