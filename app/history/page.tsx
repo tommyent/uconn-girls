@@ -157,6 +157,7 @@ export default function HistoryPage() {
       opponent: opponent.team,
       homeAway: uconnTeam.homeAway,
       date: event.date,
+      boxTeams,
     };
   };
 
@@ -312,6 +313,43 @@ export default function HistoryPage() {
                               )}
                             </div>
                           </div>
+
+                          {result.boxTeams && (
+                            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                              {result.boxTeams.map((teamBox: any) => {
+                                const stats = teamBox.statistics || [];
+                                const lookup = (names: string[]) => {
+                                  const found = stats.find((s: any) =>
+                                    names.includes(s.name)
+                                  );
+                                  return found?.displayValue ?? found?.value ?? "—";
+                                };
+                                return (
+                                  <div
+                                    key={teamBox.team?.id}
+                                    className="rounded-lg border border-border/60 p-3"
+                                  >
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="font-semibold text-foreground">
+                                        {teamBox.team?.abbreviation || teamBox.team?.displayName}
+                                      </span>
+                                      <Badge variant="outline">
+                                        {teamBox.homeAway?.toUpperCase() || ""}
+                                      </Badge>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 text-muted-foreground">
+                                      <span>FG%: {lookup(["fieldGoalPct", "fgPct"])}</span>
+                                      <span>3P%: {lookup(["threePointFieldGoalPct", "threePointPct", "3PtPct"])}</span>
+                                      <span>FT%: {lookup(["freeThrowPct", "ftPct"])}</span>
+                                      <span>REB: {lookup(["totalRebounds"])}</span>
+                                      <span>AST: {lookup(["assists"])}</span>
+                                      <span>TO: {lookup(["turnovers", "totalTurnovers"])}</span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                       </CardHeader>
                     </Card>
