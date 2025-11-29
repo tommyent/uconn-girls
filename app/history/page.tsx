@@ -244,8 +244,10 @@ export default function HistoryPage() {
     const container = summary?.boxscore?.players?.find(
       (p: any) => p.team?.id === teamId
     );
+    const statCategory = container?.statistics?.[0];
+    const statKeys: string[] = statCategory?.keys || [];
     const athleteStats =
-      container?.statistics?.[0]?.athletes ||
+      statCategory?.athletes ||
       container?.athletes ||
       container?.players ||
       [];
@@ -257,9 +259,25 @@ export default function HistoryPage() {
         ath?.athlete?.stats ||
         [];
 
+      // Convert stat arrays (strings) into a keyed object using statKeys
+      const statsObj: Record<string, any> = {};
+      if (Array.isArray(statsArr) && statKeys.length === statsArr.length) {
+        statKeys.forEach((key, idx) => {
+          statsObj[key] = statsArr[idx];
+        });
+      } else if (Array.isArray(statsArr)) {
+        statsArr.forEach((val: any, idx: number) => {
+          statsObj[String(idx)] = val;
+        });
+      }
+
       const getStat = (...keys: string[]) => {
-        const stat = statsArr.find((s: any) => keys.includes(s.name));
-        return stat?.displayValue ?? stat?.value ?? null;
+        for (const k of keys) {
+          if (statsObj[k] !== undefined && statsObj[k] !== null) {
+            return statsObj[k];
+          }
+        }
+        return null;
       };
 
       return {
