@@ -1,4 +1,10 @@
-import { getTeamRoster, getUConnTeamInfo, getPlayerStats } from "@/lib/espn-api";
+import {
+  getTeamRoster,
+  getUConnTeamInfo,
+  getPlayerStats,
+  getTeamSchedule,
+  getGameSummary,
+} from "@/lib/espn-api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users } from "lucide-react";
@@ -14,6 +20,117 @@ export default async function PlayersPage() {
   const today = new Date();
   const seasonEndYear = today.getMonth() >= 6 ? today.getFullYear() + 1 : today.getFullYear();
   const seasonLabel = `${seasonEndYear - 1}-${seasonEndYear.toString().slice(-2)}`;
+
+  // Fetch schedule to aggregate completed game stats
+  const schedule = await getTeamSchedule(seasonEndYear.toString());
+  const completedGameIds =
+    schedule?.events
+      ?.filter((event: any) => event.competitions?.[0]?.status?.type?.completed)
+      .map((event: any) => event.id)
+      .filter(Boolean) || [];
+
+  // Aggregate per-player totals from completed game summaries
+  const aggregateTotals: Record<
+    string,
+    {
+      games: number;
+      pts: number;
+      reb: number;
+      ast: number;
+      stl: number;
+      blk: number;
+      tov: number;
+      fgm: number;
+      fga: number;
+      tpm: number;
+      tpa: number;
+      ftm: number;
+      fta: number;
+      mins: number;
+    }
+  > = {};
+
+  const parseNum = (val: any) => {
+    if (val === null || val === undefined || val === "") return null;
+    const num = Number(val);
+    return Number.isFinite(num) ? num : null;
+  };
+
+  const summaries = await Promise.all(
+    completedGameIds.map(async (id: string) => {
+      try {
+        const data = await getGameSummary(id);
+        return data;
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  summaries.forEach((summary) => {
+    if (!summary?.boxscore?.players) return;
+    const uconn = summary.boxscore.players.find(
+      (p: any) => p.team?.id === team?.id || p.team?.id === "41"
+    );
+    const statCategory = uconn?.statistics?.[0];
+    const statKeys: string[] = statCategory?.keys || [];
+    const athletesStats = statCategory?.athletes || [];
+
+    athletesStats.forEach((ath: any) => {
+      const statsArr = ath.stats || [];
+      const statsMap: Record<string, any> = {};
+      if (Array.isArray(statsArr) && statKeys.length === statsArr.length) {
+        statKeys.forEach((k, i) => {
+          statsMap[k] = statsArr[i];
+        });
+      }
+      const id = ath.athlete?.id;
+      if (!id) return;
+      if (!aggregateTotals[id]) {
+        aggregateTotals[id] = {
+          games: 0,
+          pts: 0,
+          reb: 0,
+          ast: 0,
+          stl: 0,
+          blk: 0,
+          tov: 0,
+          fgm: 0,
+          fga: 0,
+          tpm: 0,
+          tpa: 0,
+          ftm: 0,
+          fta: 0,
+          mins: 0,
+        };
+      }
+      const agg = aggregateTotals[id];
+      agg.games += 1;
+      agg.pts += parseNum(statsMap.points) || 0;
+      agg.reb += parseNum(statsMap.rebounds) || 0;
+      agg.ast += parseNum(statsMap.assists) || 0;
+      agg.stl += parseNum(statsMap.steals) || 0;
+      agg.blk += parseNum(statsMap.blocks) || 0;
+      agg.tov += parseNum(statsMap.turnovers) || 0;
+
+      const fgParts = (statsMap["fieldGoalsMade-fieldGoalsAttempted"] || "").split("-");
+      if (fgParts.length === 2) {
+        agg.fgm += parseNum(fgParts[0]) || 0;
+        agg.fga += parseNum(fgParts[1]) || 0;
+      }
+      const threeParts = (statsMap["threePointFieldGoalsMade-threePointFieldGoalsAttempted"] || "").split("-");
+      if (threeParts.length === 2) {
+        agg.tpm += parseNum(threeParts[0]) || 0;
+        agg.tpa += parseNum(threeParts[1]) || 0;
+      }
+      const ftParts = (statsMap["freeThrowsMade-freeThrowsAttempted"] || "").split("-");
+      if (ftParts.length === 2) {
+        agg.ftm += parseNum(ftParts[0]) || 0;
+        agg.fta += parseNum(ftParts[1]) || 0;
+      }
+      agg.mins += parseNum(statsMap.minutes) || 0;
+    });
+  });
 
   // Fetch per-player season stats (best effort)
   const playerStatsEntries = await Promise.all(
@@ -121,17 +238,48 @@ export default async function PlayersPage() {
                     return String(val);
                   };
 
+                  const agg = aggregateTotals[player.id];
+                  const gpFromAgg = agg?.games || null;
+                  const avg = (val: number | undefined, games: number | null) =>
+                    games && games > 0 ? (val || 0) / games : null;
+                  const pct = (made: number | undefined, att: number | undefined) =>
+                    made !== undefined &&
+                    att !== undefined &&
+                    att !== 0 &&
+                    made !== null &&
+                    att !== null
+                      ? `${((made / att) * 100).toFixed(1)}%`
+                      : null;
+
                   const stats = {
-                    ppg: getStat("avgPoints", "pointsPerGame", "ppg", "points"),
-                    rpg: getStat("avgRebounds", "reboundsPerGame", "rpg", "rebounds"),
-                    apg: getStat("avgAssists", "assistsPerGame", "apg", "assists"),
-                    mpg: getStat("avgMinutes", "minutesPerGame", "mpg", "minutes"),
-                    gp: getStat("gamesPlayed", "games", "appearances"),
-                    spg: getStat("avgSteals", "stealsPerGame", "spg", "steals"),
-                    bpg: getStat("avgBlocks", "blocksPerGame", "bpg", "blocks"),
-                    fg: formatPct(getStat("fieldGoalPct", "fgPct")),
-                    three: formatPct(getStat("threePointPct", "threePointFieldGoalPct", "threePct", "3PtPct")),
-                    ft: formatPct(getStat("freeThrowPct", "ftPct")),
+                    ppg:
+                      avg(agg?.pts, gpFromAgg) ??
+                      getStat("avgPoints", "pointsPerGame", "ppg", "points"),
+                    rpg:
+                      avg(agg?.reb, gpFromAgg) ??
+                      getStat("avgRebounds", "reboundsPerGame", "rpg", "rebounds"),
+                    apg:
+                      avg(agg?.ast, gpFromAgg) ??
+                      getStat("avgAssists", "assistsPerGame", "apg", "assists"),
+                    mpg:
+                      avg(agg?.mins, gpFromAgg) ??
+                      getStat("avgMinutes", "minutesPerGame", "mpg", "minutes"),
+                    gp: gpFromAgg ?? getStat("gamesPlayed", "games", "appearances"),
+                    spg:
+                      avg(agg?.stl, gpFromAgg) ??
+                      getStat("avgSteals", "stealsPerGame", "spg", "steals"),
+                    bpg:
+                      avg(agg?.blk, gpFromAgg) ??
+                      getStat("avgBlocks", "blocksPerGame", "bpg", "blocks"),
+                    fg:
+                      pct(agg?.fgm, agg?.fga) ??
+                      formatPct(getStat("fieldGoalPct", "fgPct")),
+                    three:
+                      pct(agg?.tpm, agg?.tpa) ??
+                      formatPct(getStat("threePointPct", "threePointFieldGoalPct", "threePct", "3PtPct")),
+                    ft:
+                      pct(agg?.ftm, agg?.fta) ??
+                      formatPct(getStat("freeThrowPct", "ftPct")),
                   };
 
                   const statEntries = [
