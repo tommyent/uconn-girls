@@ -13,6 +13,45 @@ const getCurrentSeasonYear = () => {
   return today.getMonth() >= 6 ? today.getFullYear() : today.getFullYear() - 1;
 };
 
+const StatRow = ({
+  label,
+  home,
+  away,
+  homePercent,
+  awayPercent,
+}: {
+  label: string;
+  home: string | number | null;
+  away: string | number | null;
+  homePercent?: number | null;
+  awayPercent?: number | null;
+}) => (
+  <div className="space-y-1">
+    <div className="grid grid-cols-3 text-sm text-muted-foreground">
+      <span className="text-left">{home ?? "—"}</span>
+      <span className="text-center text-foreground font-medium">{label}</span>
+      <span className="text-right">{away ?? "—"}</span>
+    </div>
+    {(homePercent !== null || awayPercent !== null) && (
+      <div className="grid grid-cols-3 items-center gap-2 text-[11px] text-muted-foreground">
+        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full bg-primary/80"
+            style={{ width: `${Math.min(Math.max(homePercent ?? 0, 0), 100)}%` }}
+          />
+        </div>
+        <div />
+        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full bg-primary/60"
+            style={{ width: `${Math.min(Math.max(awayPercent ?? 0, 0), 100)}%` }}
+          />
+        </div>
+      </div>
+    )}
+  </div>
+);
+
 export default function HistoryPage() {
   const currentSeasonYear = getCurrentSeasonYear();
   const [selectedYear, setSelectedYear] = useState(currentSeasonYear);
@@ -544,40 +583,70 @@ export default function HistoryPage() {
                     </CardHeader>
                     <CardContent className="p-4 space-y-4">
                       {(homeStats || awayStats) && (
-                        <div className="rounded-xl border border-border/50 bg-card/50 p-4 space-y-2">
+                        <div className="rounded-xl border border-border/50 bg-card/50 p-4 space-y-3">
                           <p className="text-sm font-semibold text-foreground mb-1">
                             Team Comparison
                           </p>
-                          <div className="grid grid-cols-3 text-sm text-muted-foreground">
-                            <span className="text-left">{homeStats?.fg ?? "—"}</span>
-                            <span className="text-center text-foreground font-medium">FG%</span>
-                            <span className="text-right">{awayStats?.fg ?? "—"}</span>
-                          </div>
-                          <div className="grid grid-cols-3 text-sm text-muted-foreground">
-                            <span className="text-left">{homeStats?.three ?? "—"}</span>
-                            <span className="text-center text-foreground font-medium">3P%</span>
-                            <span className="text-right">{awayStats?.three ?? "—"}</span>
-                          </div>
-                          <div className="grid grid-cols-3 text-sm text-muted-foreground">
-                            <span className="text-left">{homeStats?.ft ?? "—"}</span>
-                            <span className="text-center text-foreground font-medium">FT%</span>
-                            <span className="text-right">{awayStats?.ft ?? "—"}</span>
-                          </div>
-                          <div className="grid grid-cols-3 text-sm text-muted-foreground">
-                            <span className="text-left">{homeStats?.reb ?? "—"}</span>
-                            <span className="text-center text-foreground font-medium">REB</span>
-                            <span className="text-right">{awayStats?.reb ?? "—"}</span>
-                          </div>
-                          <div className="grid grid-cols-3 text-sm text-muted-foreground">
-                            <span className="text-left">{homeStats?.ast ?? "—"}</span>
-                            <span className="text-center text-foreground font-medium">AST</span>
-                            <span className="text-right">{awayStats?.ast ?? "—"}</span>
-                          </div>
-                          <div className="grid grid-cols-3 text-sm text-muted-foreground">
-                            <span className="text-left">{homeStats?.to ?? "—"}</span>
-                            <span className="text-center text-foreground font-medium">TO</span>
-                            <span className="text-right">{awayStats?.to ?? "—"}</span>
-                          </div>
+                          <StatRow
+                            label="FG%"
+                            home={homeStats?.fg ?? "—"}
+                            away={awayStats?.fg ?? "—"}
+                            homePercent={
+                              typeof homeStats?.fg === "number"
+                                ? Number(homeStats.fg)
+                                : null
+                            }
+                            awayPercent={
+                              typeof awayStats?.fg === "number"
+                                ? Number(awayStats.fg)
+                                : null
+                            }
+                          />
+                          <StatRow
+                            label="3P%"
+                            home={homeStats?.three ?? "—"}
+                            away={awayStats?.three ?? "—"}
+                            homePercent={
+                              typeof homeStats?.three === "number"
+                                ? Number(homeStats.three)
+                                : null
+                            }
+                            awayPercent={
+                              typeof awayStats?.three === "number"
+                                ? Number(awayStats.three)
+                                : null
+                            }
+                          />
+                          <StatRow
+                            label="FT%"
+                            home={homeStats?.ft ?? "—"}
+                            away={awayStats?.ft ?? "—"}
+                            homePercent={
+                              typeof homeStats?.ft === "number"
+                                ? Number(homeStats.ft)
+                                : null
+                            }
+                            awayPercent={
+                              typeof awayStats?.ft === "number"
+                                ? Number(awayStats.ft)
+                                : null
+                            }
+                          />
+                          <StatRow
+                            label="REB"
+                            home={homeStats?.reb ?? "—"}
+                            away={awayStats?.reb ?? "—"}
+                          />
+                          <StatRow
+                            label="AST"
+                            home={homeStats?.ast ?? "—"}
+                            away={awayStats?.ast ?? "—"}
+                          />
+                          <StatRow
+                            label="TO"
+                            home={homeStats?.to ?? "—"}
+                            away={awayStats?.to ?? "—"}
+                          />
                         </div>
                       )}
 
