@@ -589,13 +589,13 @@ export default function HistoryPage() {
                       </div>
                     </div>
 
-                    <Card className="overflow-hidden bg-[#0c0c15] border border-border/50 shadow-lg">
-                      <CardContent className="p-4 space-y-3">
-                      {(homeStats || awayStats) && (
-                        <div className="rounded-xl border border-border/50 bg-card/50 p-3 space-y-3">
-                          <p className="text-sm font-semibold text-foreground mb-1">
-                            Team Comparison
-                          </p>
+                    <Card className="bg-transparent border-0 shadow-none overflow-visible">
+                      <CardContent className="p-0 space-y-3">
+                        {(homeStats || awayStats) && (
+                          <div className="rounded-xl bg-card/50 p-3 space-y-3 border border-border/50">
+                            <p className="text-sm font-semibold text-foreground mb-1">
+                              Team Comparison
+                            </p>
                           <StatRow
                             label="FG%"
                             home={homeStats?.fg ?? "—"}
@@ -701,7 +701,7 @@ export default function HistoryPage() {
                               {awayTeam?.team?.shortDisplayName || "Away"}
                             </button>
                           </div>
-                          <div className="rounded-xl border border-border/60 bg-card/60 p-3 text-xs text-muted-foreground">
+                          <div className="rounded-xl bg-card/60 p-3 text-xs text-muted-foreground border border-border/60">
                             <div className="grid grid-cols-5 gap-2 font-semibold mb-2">
                               <span className="text-left">Player</span>
                               <span className="text-center">PTS</span>
