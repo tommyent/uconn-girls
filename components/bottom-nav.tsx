@@ -12,11 +12,6 @@ const navItems = [
     icon: Home,
   },
   {
-    name: "Live",
-    href: "/live",
-    icon: Trophy,
-  },
-  {
     name: "Players",
     href: "/players",
     icon: Users,

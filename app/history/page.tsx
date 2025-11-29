@@ -575,7 +575,10 @@ export default function HistoryPage() {
                             <p className="text-xs tracking-wide font-semibold uppercase">
                               {awayTeam?.team?.shortDisplayName || "AWAY"}
                             </p>
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge
+                              variant="secondary"
+                              className="text-xs px-3 py-1 bg-rose-500/20 text-rose-100 border-0"
+                            >
                               AWAY
                             </Badge>
                           </div>
@@ -601,7 +604,10 @@ export default function HistoryPage() {
                             <p className="text-xs tracking-wide font-semibold uppercase">
                               {homeTeam?.team?.shortDisplayName || "HOME"}
                             </p>
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge
+                              variant="secondary"
+                              className="text-xs px-3 py-1 bg-emerald-500/20 text-emerald-100 border-0"
+                            >
                               HOME
                             </Badge>
                           </div>
@@ -816,26 +822,73 @@ export default function HistoryPage() {
                   if (!opponent) return null;
 
                   return (
-                    <Card key={event.id}>
-                      <CardHeader>
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <Badge variant="outline" className="mb-2">
-                              {uconnTeam?.homeAway === "home" ? "HOME" : "AWAY"}
-                            </Badge>
-                            <CardTitle className="text-2xl">
-                              vs {opponent.team.displayName}
-                            </CardTitle>
-                            <p className="text-lg text-muted-foreground mt-1">
+                    <Card
+                      key={event.id}
+                      className="bg-gradient-to-r from-primary/15 to-primary/5 border border-border/40 rounded-2xl shadow-sm"
+                    >
+                      <CardHeader className="pb-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            {uconnTeam?.team?.logos?.[0]?.href && (
+                              <img
+                                src={uconnTeam.team.logos[0].href}
+                                alt="UConn"
+                                className="h-12 w-12 rounded-[10px] object-contain"
+                              />
+                            )}
+                            <div className="text-left space-y-1">
+                              <div
+                                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                                  uconnTeam?.homeAway === "home"
+                                    ? "bg-emerald-500/15 text-emerald-100"
+                                    : "bg-rose-500/15 text-rose-100"
+                                }`}
+                              >
+                                {uconnTeam?.homeAway === "home" ? "HOME" : "AWAY"}
+                              </div>
+                              <p className="text-lg font-bold text-foreground">
+                                UConn Huskies
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-xs uppercase text-muted-foreground">Upcoming</p>
+                            <p className="text-xl font-semibold">
                               {new Date(event.date).toLocaleDateString("en-US", {
-                                weekday: "long",
-                                month: "long",
+                                weekday: "short",
+                                month: "short",
                                 day: "numeric",
-                                year: "numeric",
+                              })}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(event.date).toLocaleTimeString("en-US", {
                                 hour: "numeric",
                                 minute: "2-digit",
                               })}
                             </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="text-right space-y-1">
+                              <div
+                                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                                  uconnTeam?.homeAway === "home"
+                                    ? "bg-rose-500/15 text-rose-100"
+                                    : "bg-emerald-500/15 text-emerald-100"
+                                }`}
+                              >
+                                {uconnTeam?.homeAway === "home" ? "AWAY" : "HOME"}
+                              </div>
+                              <p className="text-lg font-bold text-foreground">
+                                {opponent.team.displayName}
+                              </p>
+                            </div>
+                            {opponent?.team?.logos?.[0]?.href && (
+                              <img
+                                src={opponent.team.logos[0].href}
+                                alt={opponent.team.displayName}
+                                className="h-12 w-12 rounded-[10px] object-contain"
+                              />
+                            )}
                           </div>
                         </div>
                       </CardHeader>
