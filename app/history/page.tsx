@@ -397,15 +397,7 @@ export default function HistoryPage() {
 
       {/* Record Summary */}
       {!loading && decidedTotal > 0 && (
-        <div className="grid grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Total Games</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-5xl font-bold">{decidedTotal}</p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader>
               <CardTitle>Wins</CardTitle>
