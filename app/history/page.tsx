@@ -397,6 +397,10 @@ export default function HistoryPage() {
     (p: any) => p.result.outcome === "loss"
   ).length;
   const decidedTotal = wins + losses;
+  const winRateRaw = decidedTotal > 0 ? (wins / decidedTotal) * 100 : 0;
+  const lossRateRaw = decidedTotal > 0 ? 100 - winRateRaw : 0;
+  const formatRate = (val: number) =>
+    Number.isFinite(val) ? Number(val.toFixed(1)).toString().replace(/\.0$/, "") : "0";
 
   return (
     <main className="min-h-screen p-6 max-w-screen-xl mx-auto">
@@ -447,14 +451,14 @@ export default function HistoryPage() {
                 <p className="text-5xl font-bold text-green-500">{wins}</p>
                 <p className="text-base font-semibold text-green-500">Wins</p>
                 <p className="text-sm text-muted-foreground">
-                  {((wins / decidedTotal) * 100).toFixed(0)}% Win Rate
+                  {formatRate(winRateRaw)}% Win Rate
                 </p>
               </div>
               <div className="text-center space-y-1">
                 <p className="text-5xl font-bold text-red-500">{losses}</p>
                 <p className="text-base font-semibold text-red-500">Losses</p>
                 <p className="text-sm text-muted-foreground">
-                  {((losses / decidedTotal) * 100).toFixed(0)}% Loss Rate
+                  {formatRate(lossRateRaw)}% Loss Rate
                 </p>
               </div>
             </div>
