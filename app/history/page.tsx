@@ -158,7 +158,51 @@ export default function HistoryPage() {
       homeAway: uconnTeam.homeAway,
       date: event.date,
       boxTeams,
+      boxPlayers: summary?.boxscore?.players,
     };
+  };
+
+  const getPlayerLines = (eventId: string, teamId: string) => {
+    const summary = summaries[eventId];
+    const container = summary?.boxscore?.players?.find(
+      (p: any) => p.team?.id === teamId
+    );
+    const athleteStats =
+      container?.statistics?.[0]?.athletes ||
+      container?.athletes ||
+      container?.players ||
+      [];
+
+    const normalize = (ath: any) => {
+      const statsArr =
+        ath?.stats ||
+        ath?.statistics ||
+        ath?.athlete?.stats ||
+        [];
+
+      const getStat = (...keys: string[]) => {
+        const stat = statsArr.find((s: any) => keys.includes(s.name));
+        return stat?.displayValue ?? stat?.value ?? null;
+      };
+
+      return {
+        id: ath?.athlete?.id || ath?.id || ath?.uid || ath?.name,
+        name: ath?.athlete?.displayName || ath?.displayName || ath?.name,
+        starter: ath?.starter,
+        position:
+          ath?.position?.abbreviation ||
+          ath?.athlete?.position?.abbreviation ||
+          "",
+        mins: getStat("minutes", "MIN"),
+        pts: getStat("points", "PTS"),
+        reb: getStat("rebounds", "REB", "totalRebounds"),
+        ast: getStat("assists", "AST"),
+        fg: getStat("fieldGoalsMade-fieldGoalsAttempted"),
+        three: getStat("threePointFieldGoalsMade-threePointFieldGoalsAttempted"),
+      };
+    };
+
+    return athleteStats.map(normalize).filter((p: any) => p.name);
   };
 
   const completedResults = completedGames
@@ -344,6 +388,71 @@ export default function HistoryPage() {
                                       <span>REB: {lookup(["totalRebounds"])}</span>
                                       <span>AST: {lookup(["assists"])}</span>
                                       <span>TO: {lookup(["turnovers", "totalTurnovers"])}</span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {result.boxPlayers && (
+                            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              {[homeTeam, opponent].map((team) => {
+                                if (!team?.team?.id) return null;
+                                const players = getPlayerLines(
+                                  event.id,
+                                  team.team.id
+                                );
+                                if (!players || players.length === 0) return null;
+                                const topPlayers = [...players]
+                                  .sort(
+                                    (a: any, b: any) =>
+                                      (Number(b.pts) || 0) - (Number(a.pts) || 0)
+                                  )
+                                  .slice(0, 5);
+                                return (
+                                  <div
+                                    key={team.team.id}
+                                    className="rounded-lg border border-border/60 p-3"
+                                  >
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="font-semibold text-foreground">
+                                        {team.team.abbreviation}
+                                      </span>
+                                      <Badge variant="outline">
+                                        {team.homeAway?.toUpperCase()}
+                                      </Badge>
+                                    </div>
+                                    <div className="grid grid-cols-5 gap-2 text-muted-foreground text-xs font-semibold mb-1">
+                                      <span>Player</span>
+                                      <span className="text-center">PTS</span>
+                                      <span className="text-center">REB</span>
+                                      <span className="text-center">AST</span>
+                                      <span className="text-center">MIN</span>
+                                    </div>
+                                    <div className="space-y-1">
+                                      {topPlayers.map((p: any) => (
+                                        <div
+                                          key={p.id}
+                                          className="grid grid-cols-5 gap-2 items-center"
+                                        >
+                                          <span className="truncate text-foreground">
+                                            {p.name}
+                                          </span>
+                                          <span className="text-center">
+                                            {p.pts ?? "—"}
+                                          </span>
+                                          <span className="text-center">
+                                            {p.reb ?? "—"}
+                                          </span>
+                                          <span className="text-center">
+                                            {p.ast ?? "—"}
+                                          </span>
+                                          <span className="text-center">
+                                            {p.mins ?? "—"}
+                                          </span>
+                                        </div>
+                                      ))}
                                     </div>
                                   </div>
                                 );
