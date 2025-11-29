@@ -1,4 +1,5 @@
 const ESPN_BASE_URL = 'http://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball';
+const CORE_BASE_URL = 'https://sports.core.api.espn.com/apis/v2/sports/basketball/womens-college-basketball';
 const UCONN_TEAM_ID = '41';
 
 // ESPN season queries expect the season end year (e.g., 2026 for the 2025-26 season).
@@ -99,9 +100,14 @@ export async function getGameSummary(gameId: string) {
   return response.json();
 }
 
-export async function getPlayerStats(playerId: string) {
-  // ESPN athlete statistics endpoint for season averages
-  const url = `https://sports.core.api.espn.com/apis/v2/sports/basketball/womens-college-basketball/athletes/${playerId}/statistics`;
+export async function getPlayerStats(
+  playerId: string,
+  opts?: { teamId?: string; season?: string | number }
+) {
+  // Fetch player stats scoped to team + season (more likely to succeed than raw athlete stats)
+  const seasonParam = (opts?.season || getCurrentSeasonEndYear()).toString();
+  const teamParam = opts?.teamId || UCONN_TEAM_ID;
+  const url = `${CORE_BASE_URL}/teams/${teamParam}/athletes/${playerId}/statistics?season=${seasonParam}`;
   const response = await fetch(url, { next: { revalidate: 3600 } });
   if (!response.ok) {
     throw new Error('Failed to fetch player stats');

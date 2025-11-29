@@ -19,9 +19,12 @@ export default async function PlayersPage() {
   const playerStatsEntries = await Promise.all(
     athletes.map(async (ath: any) => {
       try {
-        const stats = await getPlayerStats(ath.id);
+        const stats = await getPlayerStats(ath.id, {
+          teamId: ath.team?.id || team?.id || "41",
+          season: seasonEndYear,
+        });
         return { id: ath.id, stats };
-      } catch {
+      } catch (err) {
         return { id: ath.id, stats: null };
       }
     })
