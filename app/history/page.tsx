@@ -437,24 +437,35 @@ export default function HistoryPage() {
 
       {/* Record Summary */}
       {!loading && decidedTotal > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Wins</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-5xl font-bold text-green-600">{wins}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Losses</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-5xl font-bold text-red-600">{losses}</p>
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="mb-8 bg-card/80 border border-border/40 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-lg text-foreground">Season Overview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 items-center gap-6">
+              <div className="text-center space-y-1">
+                <p className="text-5xl font-bold text-green-500">{wins}</p>
+                <p className="text-base font-semibold text-green-500">Wins</p>
+                <p className="text-sm text-muted-foreground">
+                  {((wins / decidedTotal) * 100).toFixed(0)}% Win Rate
+                </p>
+              </div>
+              <div className="text-center space-y-1">
+                <p className="text-5xl font-bold text-red-500">{losses}</p>
+                <p className="text-base font-semibold text-red-500">Losses</p>
+                <p className="text-sm text-muted-foreground">
+                  {((losses / decidedTotal) * 100).toFixed(0)}% Loss Rate
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 h-3 w-full rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full bg-green-500"
+                style={{ width: `${(wins / decidedTotal) * 100}%` }}
+              />
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {loading ? (
