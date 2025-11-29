@@ -814,55 +814,69 @@ export default function HistoryPage() {
                               {awayTeam?.team?.shortDisplayName || "Away"}
                             </button>
                           </div>
-                          <div className="bg-card text-card-foreground flex flex-col gap-3 rounded-xl border border-border/30 p-4 shadow-sm text-xs text-muted-foreground">
-                            <div className="grid grid-cols-5 gap-2 font-semibold mb-2">
-                              <span className="text-left">Player</span>
-                              <span className="text-center">PTS</span>
-                              <span className="text-center">REB</span>
-                              <span className="text-center">AST</span>
-                              <span className="text-center">MIN</span>
-                            </div>
-                            <div className="space-y-1">
+                          <div className="bg-card text-card-foreground rounded-xl border border-border/30 p-4 shadow-sm">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               {(
                                 (activeTabs[event.id] || homeTeam?.team?.id) ===
                                 homeTeam?.team?.id
                                   ? homePlayers
                                   : awayPlayers
-                              ).map((p: any, idx: number) => (
-                                <div
-                                  key={p.id}
-                                  className="grid grid-cols-5 gap-2 items-center rounded-md px-1"
-                                  style={{
-                                    background:
-                                      idx % 2 === 0
-                                        ? "linear-gradient(90deg, rgba(139,92,246,0.10), transparent)"
-                                        : "transparent",
-                                  }}
-                                >
-                                  <span className="text-foreground break-words leading-tight">
-                                    {(() => {
-                                      if (!p.name) return "";
-                                      const parts = String(p.name).split(" ");
-                                      if (parts.length > 1) {
-                                        return `${parts[0]}\n${parts.slice(1).join(" ")}`;
-                                      }
-                                      return p.name;
-                                    })()}
-                                  </span>
-                                  <span className="text-center">
-                                    {p.pts ?? "—"}
-                                  </span>
-                                  <span className="text-center">
-                                    {p.reb ?? "—"}
-                                  </span>
-                                  <span className="text-center">
-                                    {p.ast ?? "—"}
-                                  </span>
-                                  <span className="text-center">
-                                    {p.mins ?? "—"}
-                                  </span>
-                                </div>
-                              ))}
+                              )
+                                .filter(
+                                  (p: any) =>
+                                    p.mins !== null &&
+                                    p.mins !== undefined &&
+                                    p.mins !== "—" &&
+                                    Number(p.mins) > 0
+                                )
+                                .map((p: any, idx: number) => (
+                                  <div
+                                    key={p.id}
+                                    className="rounded-lg border border-border/40 bg-card/80 p-3 shadow-sm"
+                                    style={{
+                                      background:
+                                        idx % 2 === 0
+                                          ? "linear-gradient(90deg, rgba(139,92,246,0.08), transparent)"
+                                          : "linear-gradient(90deg, rgba(139,92,246,0.04), transparent)",
+                                    }}
+                                  >
+                                    <div className="flex items-start justify-between gap-2 mb-2">
+                                      <div className="text-foreground font-semibold leading-tight text-lg break-words">
+                                        {(() => {
+                                          if (!p.name) return "";
+                                          const parts = String(p.name).split(" ");
+                                          if (parts.length > 1) {
+                                            return `${parts[0]}\n${parts.slice(1).join(" ")}`;
+                                          }
+                                          return p.name;
+                                        })()}
+                                      </div>
+                                      <div className="text-sm text-muted-foreground">
+                                        MIN: <span className="text-foreground font-semibold">{p.mins ?? "—"}</span>
+                                      </div>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2 text-sm text-muted-foreground">
+                                      <div className="rounded-md bg-muted/20 px-2 py-2 text-center">
+                                        <div className="text-[11px] uppercase tracking-wide font-semibold">PTS</div>
+                                        <div className="text-lg font-bold text-foreground">
+                                          {p.pts ?? "—"}
+                                        </div>
+                                      </div>
+                                      <div className="rounded-md bg-muted/20 px-2 py-2 text-center">
+                                        <div className="text-[11px] uppercase tracking-wide font-semibold">REB</div>
+                                        <div className="text-lg font-bold text-foreground">
+                                          {p.reb ?? "—"}
+                                        </div>
+                                      </div>
+                                      <div className="rounded-md bg-muted/20 px-2 py-2 text-center">
+                                        <div className="text-[11px] uppercase tracking-wide font-semibold">AST</div>
+                                        <div className="text-lg font-bold text-foreground">
+                                          {p.ast ?? "—"}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
                             </div>
                           </div>
                         </div>
