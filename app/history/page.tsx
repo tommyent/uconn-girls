@@ -721,10 +721,16 @@ export default function HistoryPage() {
                                 homeTeam?.team?.id
                                   ? homePlayers
                                   : awayPlayers
-                              ).map((p: any) => (
+                              ).map((p: any, idx: number) => (
                                 <div
                                   key={p.id}
-                                  className="grid grid-cols-5 gap-2 items-center"
+                                  className="grid grid-cols-5 gap-2 items-center rounded-md px-1"
+                                  style={{
+                                    background:
+                                      idx % 2 === 0
+                                        ? "linear-gradient(90deg, rgba(139,92,246,0.10), transparent)"
+                                        : "transparent",
+                                  }}
                                 >
                                   <span className="truncate text-foreground">
                                     {p.name}
