@@ -665,12 +665,18 @@ export default function HistoryPage() {
                             home={homeStats?.reb ?? "—"}
                             away={awayStats?.reb ?? "—"}
                             homePercent={
-                              homeStats?.rebNum !== null && awayStats?.rebNum !== null
+                              homeStats &&
+                              awayStats &&
+                              homeStats.rebNum !== null &&
+                              awayStats.rebNum !== null
                                 ? (homeStats.rebNum / (homeStats.rebNum + awayStats.rebNum)) * 100
                                 : null
                             }
                             awayPercent={
-                              homeStats?.rebNum !== null && awayStats?.rebNum !== null
+                              homeStats &&
+                              awayStats &&
+                              homeStats.rebNum !== null &&
+                              awayStats.rebNum !== null
                                 ? (awayStats.rebNum / (homeStats.rebNum + awayStats.rebNum)) * 100
                                 : null
                             }
@@ -680,12 +686,18 @@ export default function HistoryPage() {
                             home={homeStats?.ast ?? "—"}
                             away={awayStats?.ast ?? "—"}
                             homePercent={
-                              homeStats?.astNum !== null && awayStats?.astNum !== null
+                              homeStats &&
+                              awayStats &&
+                              homeStats.astNum !== null &&
+                              awayStats.astNum !== null
                                 ? (homeStats.astNum / (homeStats.astNum + awayStats.astNum)) * 100
                                 : null
                             }
                             awayPercent={
-                              homeStats?.astNum !== null && awayStats?.astNum !== null
+                              homeStats &&
+                              awayStats &&
+                              homeStats.astNum !== null &&
+                              awayStats.astNum !== null
                                 ? (awayStats.astNum / (homeStats.astNum + awayStats.astNum)) * 100
                                 : null
                             }
@@ -695,12 +707,18 @@ export default function HistoryPage() {
                             home={homeStats?.to ?? "—"}
                             away={awayStats?.to ?? "—"}
                             homePercent={
-                              homeStats?.toNum !== null && awayStats?.toNum !== null
+                              homeStats &&
+                              awayStats &&
+                              homeStats.toNum !== null &&
+                              awayStats.toNum !== null
                                 ? (homeStats.toNum / (homeStats.toNum + awayStats.toNum)) * 100
                                 : null
                             }
                             awayPercent={
-                              homeStats?.toNum !== null && awayStats?.toNum !== null
+                              homeStats &&
+                              awayStats &&
+                              homeStats.toNum !== null &&
+                              awayStats.toNum !== null
                                 ? (awayStats.toNum / (homeStats.toNum + awayStats.toNum)) * 100
                                 : null
                             }
