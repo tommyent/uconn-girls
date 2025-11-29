@@ -459,10 +459,16 @@ export default function HistoryPage() {
               </div>
             </div>
             <div className="mt-6 h-3 w-full rounded-full bg-muted overflow-hidden">
-              <div
-                className="h-full bg-green-500"
-                style={{ width: `${(wins / decidedTotal) * 100}%` }}
-              />
+              <div className="flex h-full w-full">
+                <div
+                  className="h-full bg-green-500"
+                  style={{ width: `${(wins / decidedTotal) * 100}%` }}
+                />
+                <div
+                  className="h-full bg-red-500 flex-1"
+                  style={{ width: `${(losses / decidedTotal) * 100}%` }}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
