@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { BottomNav } from "@/components/bottom-nav";
 import { RegisterServiceWorker } from "./register-sw";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export const metadata: Metadata = {
   title: "UConn Women's Basketball Tracker",
@@ -27,8 +28,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body className="font-sans">
+        <ThemeToggle />
         <RegisterServiceWorker />
         <div className="pb-24">{children}</div>
         <BottomNav />

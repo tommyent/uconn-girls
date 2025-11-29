@@ -361,7 +361,7 @@ export function LiveWidget() {
               return (
                 <Card
                   key={event.id}
-                  className="bg-gradient-to-r from-primary/15 to-primary/5 border border-border/40 rounded-2xl shadow-sm"
+                  className="bg-card border border-border/40 rounded-2xl shadow-sm"
                 >
                   <CardContent className="p-5 space-y-4">
                     <div className="flex items-center justify-between gap-6">
@@ -376,9 +376,7 @@ export function LiveWidget() {
                         <div className="space-y-2">
                           <div
                             className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                              isHome
-                                ? "bg-emerald-500/20 text-emerald-100"
-                                : "bg-rose-500/20 text-rose-100"
+                              isHome ? "bg-emerald-500 text-white" : "bg-rose-500 text-white"
                             }`}
                           >
                             {isHome ? "HOME" : "AWAY"}
@@ -392,9 +390,7 @@ export function LiveWidget() {
                         <div className="space-y-2">
                           <div
                             className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                              isHome
-                                ? "bg-rose-500/20 text-rose-100"
-                                : "bg-emerald-500/20 text-emerald-100"
+                              isHome ? "bg-rose-500 text-white" : "bg-emerald-500 text-white"
                             }`}
                           >
                             {isHome ? "AWAY" : "HOME"}

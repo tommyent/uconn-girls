@@ -93,7 +93,7 @@ export default async function Home() {
                       />
                     )}
                     <div className="space-y-1">
-                      <div className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-rose-500/15 text-rose-100">
+                      <div className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-rose-500 text-white">
                         Away
                       </div>
                       <p className="font-semibold text-foreground">
@@ -113,7 +113,7 @@ export default async function Home() {
                       />
                     )}
                     <div className="space-y-1">
-                      <div className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-emerald-500/15 text-emerald-100">
+                      <div className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-emerald-500 text-white">
                         Home
                       </div>
                       <p className="font-semibold text-foreground">

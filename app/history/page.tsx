@@ -386,6 +386,11 @@ export default function HistoryPage() {
         ast: getStat("assists", "AST"),
         fg: getStat("fieldGoalsMade-fieldGoalsAttempted"),
         three: getStat("threePointFieldGoalsMade-threePointFieldGoalsAttempted"),
+        headshot:
+          ath?.athlete?.headshot?.href ||
+          ath?.headshot?.href ||
+          ath?.athlete?.photo?.href ||
+          null,
       };
     };
 
@@ -426,6 +431,11 @@ export default function HistoryPage() {
           "3ptm-3pta",
           "threePt",
         ]),
+        headshot:
+          ath?.athlete?.headshot?.href ||
+          ath?.headshot?.href ||
+          ath?.athlete?.photo?.href ||
+          null,
       };
     };
 
@@ -604,6 +614,17 @@ export default function HistoryPage() {
                 const awayPlayers = awayTeam?.team?.id
                   ? getPlayerLines(event.id, awayTeam.team.id)
                   : [];
+                const uconnCompetitor = competition?.competitors?.find(
+                  (c: any) => c.team?.id === "41"
+                );
+                const leftScore =
+                  awayTeam?.team?.id === uconnCompetitor?.team?.id
+                    ? result.uconnScore
+                    : result.opponentScore;
+                const rightScore =
+                  homeTeam?.team?.id === uconnCompetitor?.team?.id
+                    ? result.uconnScore
+                    : result.opponentScore;
                 const resultColor =
                   result.outcome === "win"
                     ? "hsl(80deg 100% 55%)"
@@ -629,7 +650,7 @@ export default function HistoryPage() {
                             </p>
                             <Badge
                               variant="secondary"
-                              className="text-xs px-3 py-1 bg-rose-500/20 text-rose-100 border-0"
+                              className="text-xs px-3 py-1 bg-rose-500 text-white border-0"
                             >
                               AWAY
                             </Badge>
@@ -637,7 +658,7 @@ export default function HistoryPage() {
                         </div>
                         <div className="text-center">
                           <p className="text-3xl md:text-4xl font-bold text-white">
-                            {result.uconnScore} - {result.opponentScore}
+                            {leftScore ?? "—"} - {rightScore ?? "—"}
                           </p>
                           <p className="text-sm font-semibold uppercase mt-1">
                             {competition?.status?.type?.shortDetail || "Final"}
@@ -658,7 +679,7 @@ export default function HistoryPage() {
                             </p>
                             <Badge
                               variant="secondary"
-                              className="text-xs px-3 py-1 bg-emerald-500/20 text-emerald-100 border-0"
+                              className="text-xs px-3 py-1 bg-emerald-500 text-white border-0"
                             >
                               HOME
                             </Badge>
@@ -816,67 +837,142 @@ export default function HistoryPage() {
                           </div>
                           <div className="bg-card text-card-foreground rounded-xl border border-border/30 p-4 shadow-sm">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              {(
-                                (activeTabs[event.id] || homeTeam?.team?.id) ===
-                                homeTeam?.team?.id
-                                  ? homePlayers
-                                  : awayPlayers
-                              )
-                                .filter(
-                                  (p: any) =>
-                                    p.mins !== null &&
-                                    p.mins !== undefined &&
-                                    p.mins !== "—" &&
-                                    Number(p.mins) > 0
-                                )
-                                .map((p: any, idx: number) => (
-                                  <div
-                                    key={p.id}
-                                    className="rounded-lg border border-border/40 bg-card/80 p-3 shadow-sm"
-                                    style={{
-                                      background:
-                                        idx % 2 === 0
-                                          ? "linear-gradient(90deg, rgba(139,92,246,0.08), transparent)"
-                                          : "linear-gradient(90deg, rgba(139,92,246,0.04), transparent)",
-                                    }}
-                                  >
-                                    <div className="flex items-start justify-between gap-2 mb-2">
-                                      <div className="text-foreground font-semibold leading-tight text-lg break-words">
-                                        {(() => {
-                                          if (!p.name) return "";
-                                          const parts = String(p.name).split(" ");
-                                          if (parts.length > 1) {
-                                            return `${parts[0]}\n${parts.slice(1).join(" ")}`;
-                                          }
-                                          return p.name;
-                                        })()}
+                              {(activeTabs[event.id] || homeTeam?.team?.id) ===
+                              homeTeam?.team?.id
+                                ? homePlayers
+                                    .filter(
+                                      (p: any) =>
+                                        p.mins !== null &&
+                                        p.mins !== undefined &&
+                                        p.mins !== "—" &&
+                                        Number(p.mins) > 0
+                                    )
+                                    .map((p: any, idx: number) => (
+                                    <div
+                                      key={p.id}
+                                      className="rounded-lg border border-border/40 bg-card/80 p-3 shadow-sm"
+                                      style={{
+                                        background:
+                                          idx % 2 === 0
+                                            ? "linear-gradient(90deg, rgba(139,92,246,0.08), transparent)"
+                                            : "linear-gradient(90deg, rgba(139,92,246,0.04), transparent)",
+                                      }}
+                                    >
+                                      <div className="flex items-start justify-between gap-2 mb-2">
+                                        <div className="flex items-center gap-3">
+                                          {p.headshot ? (
+                                            <img
+                                              src={p.headshot}
+                                              alt={p.name}
+                                              className="h-10 w-10 rounded-full object-cover"
+                                            />
+                                          ) : (
+                                            <div className="h-10 w-10 rounded-full bg-muted" />
+                                          )}
+                                          <div className="text-foreground font-semibold leading-tight text-lg break-words">
+                                            {(() => {
+                                              if (!p.name) return "";
+                                              const parts = String(p.name).split(" ");
+                                              if (parts.length > 1) {
+                                                return `${parts[0]}\n${parts.slice(1).join(" ")}`;
+                                              }
+                                              return p.name;
+                                            })()}
+                                          </div>
+                                        </div>
+                                        <div className="text-sm text-muted-foreground">
+                                          MIN: <span className="text-foreground font-semibold">{p.mins ?? "—"}</span>
+                                        </div>
                                       </div>
-                                      <div className="text-sm text-muted-foreground">
-                                        MIN: <span className="text-foreground font-semibold">{p.mins ?? "—"}</span>
+                                      <div className="grid grid-cols-3 gap-2 text-sm text-muted-foreground">
+                                        <div className="rounded-md bg-muted/20 px-2 py-2 text-center">
+                                          <div className="text-[11px] uppercase tracking-wide font-semibold">PTS</div>
+                                          <div className="text-lg font-bold text-foreground">
+                                            {p.pts ?? "—"}
+                                          </div>
+                                        </div>
+                                        <div className="rounded-md bg-muted/20 px-2 py-2 text-center">
+                                          <div className="text-[11px] uppercase tracking-wide font-semibold">REB</div>
+                                          <div className="text-lg font-bold text-foreground">
+                                            {p.reb ?? "—"}
+                                          </div>
+                                        </div>
+                                        <div className="rounded-md bg-muted/20 px-2 py-2 text-center">
+                                          <div className="text-[11px] uppercase tracking-wide font-semibold">AST</div>
+                                          <div className="text-lg font-bold text-foreground">
+                                            {p.ast ?? "—"}
+                                          </div>
+                                        </div>
                                       </div>
                                     </div>
-                                    <div className="grid grid-cols-3 gap-2 text-sm text-muted-foreground">
-                                      <div className="rounded-md bg-muted/20 px-2 py-2 text-center">
-                                        <div className="text-[11px] uppercase tracking-wide font-semibold">PTS</div>
-                                        <div className="text-lg font-bold text-foreground">
-                                          {p.pts ?? "—"}
+                                ))
+                                : awayPlayers
+                                    .filter(
+                                      (p: any) =>
+                                        p.mins !== null &&
+                                        p.mins !== undefined &&
+                                        p.mins !== "—" &&
+                                        Number(p.mins) > 0
+                                    )
+                                    .map((p: any, idx: number) => (
+                                      <div
+                                        key={p.id}
+                                        className="rounded-lg border border-border/40 bg-card/80 p-3 shadow-sm"
+                                        style={{
+                                          background:
+                                            idx % 2 === 0
+                                              ? "linear-gradient(90deg, rgba(139,92,246,0.08), transparent)"
+                                              : "linear-gradient(90deg, rgba(139,92,246,0.04), transparent)",
+                                        }}
+                                      >
+                                        <div className="flex items-start justify-between gap-2 mb-2">
+                                          <div className="flex items-center gap-3">
+                                            {p.headshot ? (
+                                              <img
+                                                src={p.headshot}
+                                                alt={p.name}
+                                                className="h-10 w-10 rounded-full object-cover"
+                                              />
+                                            ) : (
+                                              <div className="h-10 w-10 rounded-full bg-muted" />
+                                            )}
+                                            <div className="text-foreground font-semibold leading-tight text-lg break-words">
+                                              {(() => {
+                                                if (!p.name) return "";
+                                                const parts = String(p.name).split(" ");
+                                                if (parts.length > 1) {
+                                                  return `${parts[0]}\n${parts.slice(1).join(" ")}`;
+                                                }
+                                                return p.name;
+                                              })()}
+                                            </div>
+                                          </div>
+                                          <div className="text-sm text-muted-foreground">
+                                            MIN: <span className="text-foreground font-semibold">{p.mins ?? "—"}</span>
+                                          </div>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-2 text-sm text-muted-foreground">
+                                          <div className="rounded-md bg-muted/20 px-2 py-2 text-center">
+                                            <div className="text-[11px] uppercase tracking-wide font-semibold">PTS</div>
+                                            <div className="text-lg font-bold text-foreground">
+                                              {p.pts ?? "—"}
+                                            </div>
+                                          </div>
+                                          <div className="rounded-md bg-muted/20 px-2 py-2 text-center">
+                                            <div className="text-[11px] uppercase tracking-wide font-semibold">REB</div>
+                                            <div className="text-lg font-bold text-foreground">
+                                              {p.reb ?? "—"}
+                                            </div>
+                                          </div>
+                                          <div className="rounded-md bg-muted/20 px-2 py-2 text-center">
+                                            <div className="text-[11px] uppercase tracking-wide font-semibold">AST</div>
+                                            <div className="text-lg font-bold text-foreground">
+                                              {p.ast ?? "—"}
+                                            </div>
+                                          </div>
                                         </div>
                                       </div>
-                                      <div className="rounded-md bg-muted/20 px-2 py-2 text-center">
-                                        <div className="text-[11px] uppercase tracking-wide font-semibold">REB</div>
-                                        <div className="text-lg font-bold text-foreground">
-                                          {p.reb ?? "—"}
-                                        </div>
-                                      </div>
-                                      <div className="rounded-md bg-muted/20 px-2 py-2 text-center">
-                                        <div className="text-[11px] uppercase tracking-wide font-semibold">AST</div>
-                                        <div className="text-lg font-bold text-foreground">
-                                          {p.ast ?? "—"}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
+                                    ))}
                             </div>
                           </div>
                         </div>
@@ -908,10 +1004,19 @@ export default function HistoryPage() {
                   return (
                     <Card
                       key={event.id}
-                      className="bg-gradient-to-r from-primary/15 to-primary/5 border border-border/40 rounded-2xl shadow-sm"
+                      className="bg-card border border-border/40 rounded-2xl shadow-sm"
                     >
-                      <CardHeader className="pb-4">
-                        <div className="flex items-center justify-between gap-3">
+                      <CardHeader className="pb-4 space-y-3">
+                        <div className="text-center text-sm font-semibold text-foreground">
+                          {new Date(event.date).toLocaleDateString("en-US", {
+                            weekday: "short",
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })}
+                        </div>
+                        <div className="flex items-center justify-between gap-6">
                           <div className="flex items-center gap-3">
                             {uconnTeam?.team?.logos?.[0]?.href && (
                               <img
@@ -924,8 +1029,8 @@ export default function HistoryPage() {
                               <div
                                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
                                   uconnTeam?.homeAway === "home"
-                                    ? "bg-emerald-500/15 text-emerald-100"
-                                    : "bg-rose-500/15 text-rose-100"
+                                    ? "bg-emerald-500 text-white"
+                                    : "bg-rose-500 text-white"
                                 }`}
                               >
                                 {uconnTeam?.homeAway === "home" ? "HOME" : "AWAY"}
@@ -935,29 +1040,16 @@ export default function HistoryPage() {
                               </p>
                             </div>
                           </div>
-                          <div className="text-center">
-                            <p className="text-xs uppercase text-muted-foreground">Upcoming</p>
-                            <p className="text-xl font-semibold">
-                              {new Date(event.date).toLocaleDateString("en-US", {
-                                weekday: "short",
-                                month: "short",
-                                day: "numeric",
-                              })}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(event.date).toLocaleTimeString("en-US", {
-                                hour: "numeric",
-                                minute: "2-digit",
-                              })}
-                            </p>
+                          <div className="text-sm font-semibold uppercase text-muted-foreground">
+                            vs
                           </div>
                           <div className="flex items-center gap-3">
                             <div className="text-right space-y-1">
                               <div
                                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
                                   uconnTeam?.homeAway === "home"
-                                    ? "bg-rose-500/15 text-rose-100"
-                                    : "bg-emerald-500/15 text-emerald-100"
+                                    ? "bg-rose-500 text-white"
+                                    : "bg-emerald-500 text-white"
                                 }`}
                               >
                                 {uconnTeam?.homeAway === "home" ? "AWAY" : "HOME"}
