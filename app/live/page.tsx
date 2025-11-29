@@ -22,6 +22,7 @@ export default function LivePage() {
   const [upcomingLoading, setUpcomingLoading] = useState(true);
   const [summaries, setSummaries] = useState<Record<string, any>>({});
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const fetchScores = async () => {
     try {
@@ -76,6 +77,10 @@ export default function LivePage() {
     // Auto-refresh every 30 seconds
     const interval = setInterval(fetchScores, 30000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   const uconnGames = scoreboard?.events?.filter((event: any) => {
@@ -168,7 +173,14 @@ export default function LivePage() {
       <div className="flex items-center gap-2 text-muted-foreground mb-6">
         <Clock className="h-5 w-5" />
         <span className="text-lg">
-          Last updated: {lastUpdate.toLocaleTimeString()}
+          Last updated:{" "}
+          {mounted
+            ? lastUpdate.toLocaleTimeString("en-US", {
+                hour: "numeric",
+                minute: "2-digit",
+                second: "2-digit",
+              })
+            : "—"}
         </span>
       </div>
 
