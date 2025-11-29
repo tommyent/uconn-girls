@@ -546,12 +546,10 @@ export default function HistoryPage() {
                                   team.team.id
                                 );
                                 if (!players || players.length === 0) return null;
-                                const topPlayers = [...players]
-                                  .sort(
-                                    (a: any, b: any) =>
-                                      (Number(b.pts) || 0) - (Number(a.pts) || 0)
-                                  )
-                                  .slice(0, 5);
+                                const topPlayers = [...players].sort(
+                                  (a: any, b: any) =>
+                                    (Number(b.pts) || 0) - (Number(a.pts) || 0)
+                                );
                                 return (
                                   <div
                                     key={team.team.id}
