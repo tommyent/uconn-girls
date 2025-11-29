@@ -673,9 +673,9 @@ export default function HistoryPage() {
 
                           {(homePlayers.length > 0 || awayPlayers.length > 0) && (
                             <div className="space-y-3">
-                          <div className="flex items-center gap-6 text-sm font-semibold">
+                          <div className="flex items-center text-sm font-semibold">
                             <button
-                              className={`pb-2 border-b-2 ${
+                              className={`flex-1 text-center pb-2 border-b-2 ${
                                 (activeTabs[event.id] || homeTeam?.team?.id) ===
                                 homeTeam?.team?.id
                                   ? "border-primary text-foreground"
@@ -691,7 +691,7 @@ export default function HistoryPage() {
                               {homeTeam?.team?.shortDisplayName || "Home"}
                             </button>
                             <button
-                              className={`pb-2 border-b-2 ${
+                              className={`flex-1 text-center pb-2 border-b-2 ${
                                 (activeTabs[event.id] || homeTeam?.team?.id) ===
                                 awayTeam?.team?.id
                                   ? "border-primary text-foreground"
