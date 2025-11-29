@@ -489,17 +489,32 @@ export default function HistoryPage() {
                     const stat = stats.find((s: any) => keys.includes(s.name));
                     return stat?.displayValue ?? stat?.value ?? "—";
                   };
+                  const num = (val: any) => {
+                    if (val === null || val === undefined) return null;
+                    if (typeof val === "number") return val;
+                    const stripped = String(val).replace(/[^\d.-]/g, "");
+                    const parsed = parseFloat(stripped);
+                    return Number.isFinite(parsed) ? parsed : null;
+                  };
                   return {
                     fg: find("fieldGoalPct", "fgPct"),
+                    fgNum: num(find("fieldGoalPct", "fgPct")),
                     three: find(
                       "threePointFieldGoalPct",
                       "threePointPct",
                       "3PtPct"
                     ),
+                    threeNum: num(
+                      find("threePointFieldGoalPct", "threePointPct", "3PtPct")
+                    ),
                     ft: find("freeThrowPct", "ftPct"),
+                    ftNum: num(find("freeThrowPct", "ftPct")),
                     reb: find("totalRebounds"),
+                    rebNum: num(find("totalRebounds")),
                     ast: find("assists"),
+                    astNum: num(find("assists")),
                     to: find("turnovers", "totalTurnovers"),
+                    toNum: num(find("turnovers", "totalTurnovers")),
                   };
                 };
 
@@ -591,74 +606,80 @@ export default function HistoryPage() {
                             label="FG%"
                             home={homeStats?.fg ?? "—"}
                             away={awayStats?.fg ?? "—"}
-                            homePercent={
-                              typeof homeStats?.fg === "number"
-                                ? Number(homeStats.fg)
-                                : null
-                            }
-                            awayPercent={
-                              typeof awayStats?.fg === "number"
-                                ? Number(awayStats.fg)
-                                : null
-                            }
+                            homePercent={homeStats?.fgNum ?? null}
+                            awayPercent={awayStats?.fgNum ?? null}
                           />
                           <StatRow
                             label="3P%"
                             home={homeStats?.three ?? "—"}
                             away={awayStats?.three ?? "—"}
-                            homePercent={
-                              typeof homeStats?.three === "number"
-                                ? Number(homeStats.three)
-                                : null
-                            }
-                            awayPercent={
-                              typeof awayStats?.three === "number"
-                                ? Number(awayStats.three)
-                                : null
-                            }
+                            homePercent={homeStats?.threeNum ?? null}
+                            awayPercent={awayStats?.threeNum ?? null}
                           />
                           <StatRow
                             label="FT%"
                             home={homeStats?.ft ?? "—"}
                             away={awayStats?.ft ?? "—"}
-                            homePercent={
-                              typeof homeStats?.ft === "number"
-                                ? Number(homeStats.ft)
-                                : null
-                            }
-                            awayPercent={
-                              typeof awayStats?.ft === "number"
-                                ? Number(awayStats.ft)
-                                : null
-                            }
+                            homePercent={homeStats?.ftNum ?? null}
+                            awayPercent={awayStats?.ftNum ?? null}
                           />
                           <StatRow
                             label="REB"
                             home={homeStats?.reb ?? "—"}
                             away={awayStats?.reb ?? "—"}
+                            homePercent={
+                              homeStats?.rebNum !== null && awayStats?.rebNum !== null
+                                ? (homeStats.rebNum / (homeStats.rebNum + awayStats.rebNum)) * 100
+                                : null
+                            }
+                            awayPercent={
+                              homeStats?.rebNum !== null && awayStats?.rebNum !== null
+                                ? (awayStats.rebNum / (homeStats.rebNum + awayStats.rebNum)) * 100
+                                : null
+                            }
                           />
                           <StatRow
                             label="AST"
                             home={homeStats?.ast ?? "—"}
                             away={awayStats?.ast ?? "—"}
+                            homePercent={
+                              homeStats?.astNum !== null && awayStats?.astNum !== null
+                                ? (homeStats.astNum / (homeStats.astNum + awayStats.astNum)) * 100
+                                : null
+                            }
+                            awayPercent={
+                              homeStats?.astNum !== null && awayStats?.astNum !== null
+                                ? (awayStats.astNum / (homeStats.astNum + awayStats.astNum)) * 100
+                                : null
+                            }
                           />
                           <StatRow
                             label="TO"
                             home={homeStats?.to ?? "—"}
                             away={awayStats?.to ?? "—"}
+                            homePercent={
+                              homeStats?.toNum !== null && awayStats?.toNum !== null
+                                ? (homeStats.toNum / (homeStats.toNum + awayStats.toNum)) * 100
+                                : null
+                            }
+                            awayPercent={
+                              homeStats?.toNum !== null && awayStats?.toNum !== null
+                                ? (awayStats.toNum / (homeStats.toNum + awayStats.toNum)) * 100
+                                : null
+                            }
                           />
                         </div>
                       )}
 
-                      {(homePlayers.length > 0 || awayPlayers.length > 0) && (
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-4 text-sm font-semibold">
+                          {(homePlayers.length > 0 || awayPlayers.length > 0) && (
+                            <div className="space-y-3">
+                          <div className="flex items-center gap-0 text-sm font-semibold rounded-full overflow-hidden border border-border/70">
                             <button
-                              className={`pb-2 border-b-2 ${
+                              className={`w-1/2 py-2 transition ${
                                 (activeTabs[event.id] || homeTeam?.team?.id) ===
                                 homeTeam?.team?.id
-                                  ? "border-primary text-foreground"
-                                  : "border-transparent text-muted-foreground"
+                                  ? "bg-primary/20 text-foreground"
+                                  : "bg-transparent text-muted-foreground"
                               }`}
                               onClick={() =>
                                 setActiveTabs((prev) => ({
@@ -670,11 +691,11 @@ export default function HistoryPage() {
                               {homeTeam?.team?.shortDisplayName || "Home"}
                             </button>
                             <button
-                              className={`pb-2 border-b-2 ${
+                              className={`w-1/2 py-2 transition ${
                                 (activeTabs[event.id] || homeTeam?.team?.id) ===
                                 awayTeam?.team?.id
-                                  ? "border-primary text-foreground"
-                                  : "border-transparent text-muted-foreground"
+                                  ? "bg-primary/20 text-foreground"
+                                  : "bg-transparent text-muted-foreground"
                               }`}
                               onClick={() =>
                                 setActiveTabs((prev) => ({
