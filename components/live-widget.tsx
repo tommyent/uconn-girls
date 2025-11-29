@@ -90,11 +90,12 @@ export function LiveWidget() {
       )
     )
     ?.filter((event: any) => !bannedMatchups.includes(event.shortName));
+  const displayGames = uconnGames || [];
 
   useEffect(() => {
     const fetchSummaries = async () => {
-      if (!uconnGames || uconnGames.length === 0) return;
-      const idsToFetch = uconnGames
+      if (!displayGames || displayGames.length === 0) return;
+      const idsToFetch = displayGames
         .map((e: any) => e.id)
         .filter((id: string) => id && !summaries[id]);
       if (idsToFetch.length === 0) return;
@@ -188,9 +189,9 @@ export function LiveWidget() {
             <p className="text-muted-foreground">Loading scores...</p>
           </CardContent>
         </Card>
-      ) : uconnGames && uconnGames.length > 0 ? (
+      ) : displayGames && displayGames.length > 0 ? (
         <div className="space-y-4">
-          {uconnGames.map((game: any) => {
+          {displayGames.map((game: any) => {
             const competition = game.competitions[0];
             const homeTeam = competition.competitors.find(
               (c: any) => c.homeAway === "home"
@@ -206,6 +207,10 @@ export function LiveWidget() {
                 : homeTeam?.team?.id;
             const uStats = getTeamStats(game.id, uTeamId);
             const oppStats = oppTeamId ? getTeamStats(game.id, oppTeamId) : null;
+            const homeScore = Number(homeTeam?.score) || 0;
+            const awayScore = Number(awayTeam?.score) || 0;
+            const isHomeHigher = homeScore > awayScore;
+            const isAwayHigher = awayScore > homeScore;
 
             return (
               <Card key={game.id} className={isLive ? "border-primary" : ""}>
@@ -219,28 +224,62 @@ export function LiveWidget() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <div className="flex flex-col">
-                      <span className="text-xl font-bold">
-                        {awayTeam?.team.abbreviation}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        {awayTeam?.team.displayName}
-                      </span>
+                    <div className="flex items-center gap-3">
+                      {awayTeam?.team?.logos?.[0]?.href && (
+                        <img
+                          src={awayTeam.team.logos[0].href}
+                          alt={awayTeam.team.displayName}
+                          className="h-10 w-10 rounded-[10px] object-contain"
+                        />
+                      )}
+                      <div className="flex flex-col">
+                        <span className="text-xl font-bold">
+                          {awayTeam?.team.abbreviation}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          {awayTeam?.team.displayName}
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-3xl font-bold">
+                    <span
+                      className={`text-3xl font-bold ${
+                        isAwayHigher
+                          ? "text-emerald-400"
+                          : isHomeHigher
+                          ? "text-rose-400"
+                          : "text-foreground"
+                      }`}
+                    >
                       {awayTeam?.score || "0"}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <div className="flex flex-col">
-                      <span className="text-xl font-bold">
-                        {homeTeam?.team.abbreviation}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        {homeTeam?.team.displayName}
-                      </span>
+                    <div className="flex items-center gap-3">
+                      {homeTeam?.team?.logos?.[0]?.href && (
+                        <img
+                          src={homeTeam.team.logos[0].href}
+                          alt={homeTeam.team.displayName}
+                          className="h-10 w-10 rounded-[10px] object-contain"
+                        />
+                      )}
+                      <div className="flex flex-col">
+                        <span className="text-xl font-bold">
+                          {homeTeam?.team.abbreviation}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          {homeTeam?.team.displayName}
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-3xl font-bold">
+                    <span
+                      className={`text-3xl font-bold ${
+                        isHomeHigher
+                          ? "text-emerald-400"
+                          : isAwayHigher
+                          ? "text-rose-400"
+                          : "text-foreground"
+                      }`}
+                    >
                       {homeTeam?.score || "0"}
                     </span>
                   </div>
