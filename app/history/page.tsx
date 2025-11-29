@@ -558,7 +558,7 @@ export default function HistoryPage() {
                             </div>
                           </div>
                           <div className="text-center">
-                            <p className="text-4xl md:text-5xl font-bold text-white">
+                            <p className="text-3xl md:text-4xl font-bold text-white">
                               {result.uconnScore} - {result.opponentScore}
                             </p>
                             <p className="text-sm font-semibold uppercase mt-1">
@@ -732,7 +732,7 @@ export default function HistoryPage() {
                                         : "transparent",
                                   }}
                                 >
-                                  <span className="truncate text-foreground">
+                                  <span className="text-foreground break-words">
                                     {p.name}
                                   </span>
                                   <span className="text-center">
