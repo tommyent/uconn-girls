@@ -548,25 +548,31 @@ export default function HistoryPage() {
                 const awayPlayers = awayTeam?.team?.id
                   ? getPlayerLines(event.id, awayTeam.team.id)
                   : [];
+                const resultColor =
+                  result.outcome === "win"
+                    ? "hsl(80deg 100% 55%)"
+                    : result.outcome === "loss"
+                    ? "hsl(345.37deg 100% 66.42%)"
+                    : "var(--muted)";
 
                 return (
                   <div key={event.id} className="space-y-3">
                     <div className="bg-gradient-to-r from-primary/80 to-primary/40 px-4 py-6 text-white rounded-2xl shadow-lg">
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          {homeTeam?.team?.logos?.[0]?.href && (
+                          {awayTeam?.team?.logos?.[0]?.href && (
                             <img
-                              src={homeTeam.team.logos[0].href}
-                              alt={homeTeam.team.displayName}
+                              src={awayTeam.team.logos[0].href}
+                              alt={awayTeam.team.displayName}
                               className="h-10 w-10 object-contain"
                             />
                           )}
                           <div className="space-y-1">
                             <p className="text-xs tracking-wide font-semibold uppercase">
-                              {homeTeam?.team?.shortDisplayName || "HOME"}
+                              {awayTeam?.team?.shortDisplayName || "AWAY"}
                             </p>
                             <Badge variant="secondary" className="text-xs">
-                              HOME
+                              AWAY
                             </Badge>
                           </div>
                         </div>
@@ -589,20 +595,30 @@ export default function HistoryPage() {
                         <div className="flex items-center gap-3">
                           <div className="text-right space-y-1">
                             <p className="text-xs tracking-wide font-semibold uppercase">
-                              {awayTeam?.team?.shortDisplayName || "AWAY"}
+                              {homeTeam?.team?.shortDisplayName || "HOME"}
                             </p>
                             <Badge variant="secondary" className="text-xs">
-                              AWAY
+                              HOME
                             </Badge>
                           </div>
-                          {awayTeam?.team?.logos?.[0]?.href && (
+                          {homeTeam?.team?.logos?.[0]?.href && (
                             <img
-                              src={awayTeam.team.logos[0].href}
-                              alt={awayTeam.team.displayName}
+                              src={homeTeam.team.logos[0].href}
+                              alt={homeTeam.team.displayName}
                               className="h-10 w-10 object-contain"
                             />
                           )}
                         </div>
+                      </div>
+                      <div className="mt-4 h-0.5 w-full rounded-full bg-muted overflow-hidden relative">
+                        <div
+                          className="absolute inset-0 blur-[2px]"
+                          style={{ backgroundColor: resultColor }}
+                        />
+                        <div
+                          className="relative h-full w-full"
+                          style={{ backgroundColor: resultColor }}
+                        />
                       </div>
                     </div>
 
