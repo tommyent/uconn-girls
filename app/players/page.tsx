@@ -15,6 +15,25 @@ export default async function PlayersPage() {
   const seasonEndYear = today.getMonth() >= 6 ? today.getFullYear() + 1 : today.getFullYear();
   const seasonLabel = `${seasonEndYear - 1}-${seasonEndYear.toString().slice(-2)}`;
 
+  // Fetch per-player season stats (best effort)
+  const playerStatsEntries = await Promise.all(
+    athletes.map(async (ath: any) => {
+      try {
+        const stats = await getPlayerStats(ath.id);
+        return { id: ath.id, stats };
+      } catch {
+        return { id: ath.id, stats: null };
+      }
+    })
+  );
+  const playerStatsMap = playerStatsEntries.reduce<Record<string, any>>(
+    (acc, entry) => {
+      if (entry.stats) acc[entry.id] = entry.stats;
+      return acc;
+    },
+    {}
+  );
+
   const groupedByPosition: Record<string, any[]> = {};
   athletes.forEach((athlete: any) => {
     const position = athlete.position?.abbreviation || "N/A";
@@ -246,21 +265,3 @@ export default async function PlayersPage() {
     </main>
   );
 }
-  // Fetch per-player season stats (best effort)
-  const playerStatsEntries = await Promise.all(
-    athletes.map(async (ath: any) => {
-      try {
-        const stats = await getPlayerStats(ath.id);
-        return { id: ath.id, stats };
-      } catch {
-        return { id: ath.id, stats: null };
-      }
-    })
-  );
-  const playerStatsMap = playerStatsEntries.reduce<Record<string, any>>(
-    (acc, entry) => {
-      if (entry.stats) acc[entry.id] = entry.stats;
-      return acc;
-    },
-    {}
-  );
