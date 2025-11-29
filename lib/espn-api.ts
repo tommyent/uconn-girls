@@ -87,3 +87,14 @@ export async function getGameDetails(gameId: string) {
   
   return response.json();
 }
+
+export async function getGameSummary(gameId: string) {
+  // Summary includes boxscore/team stats + leaders
+  const response = await fetch(`${ESPN_BASE_URL}/summary?event=${gameId}`, {
+    next: { revalidate: 30 },
+  });
+  if (!response.ok) {
+    throw new Error('Failed to fetch game summary');
+  }
+  return response.json();
+}

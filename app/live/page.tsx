@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { RefreshCw, Clock, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getGameSummary } from "@/lib/espn-api";
 
 const getCurrentSeasonYear = () => {
   const today = new Date();
@@ -19,6 +20,8 @@ export default function LivePage() {
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [upcoming, setUpcoming] = useState<any[]>([]);
   const [upcomingLoading, setUpcomingLoading] = useState(true);
+  const [summaries, setSummaries] = useState<Record<string, any>>({});
+  const [summaryLoading, setSummaryLoading] = useState(false);
 
   const fetchScores = async () => {
     try {
@@ -83,12 +86,68 @@ export default function LivePage() {
     );
   });
 
+  useEffect(() => {
+    const fetchSummaries = async () => {
+      if (!uconnGames || uconnGames.length === 0) return;
+      const idsToFetch = uconnGames
+        .map((e: any) => e.id)
+        .filter((id: string) => id && !summaries[id]);
+      if (idsToFetch.length === 0) return;
+      setSummaryLoading(true);
+      try {
+        const results = await Promise.all(
+          idsToFetch.map(async (id: string) => {
+            try {
+              const data = await getGameSummary(id);
+              return { id, data };
+            } catch (e) {
+              console.error("Error fetching summary", id, e);
+              return null;
+            }
+          })
+        );
+        const next = { ...summaries };
+        results.forEach((res) => {
+          if (res?.id && res.data) {
+            next[res.id] = res.data;
+          }
+        });
+        setSummaries(next);
+      } finally {
+        setSummaryLoading(false);
+      }
+    };
+    fetchSummaries();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uconnGames]);
+
   const getGameStatus = (status: any) => {
     if (status.type.completed) return "Final";
     if (status.type.state === "in") {
       return `${status.displayClock} - ${status.type.shortDetail}`;
     }
     return status.type.shortDetail;
+  };
+
+  const getTeamStats = (eventId: string, teamId: string) => {
+    const summary = summaries[eventId];
+    const boxTeams = summary?.boxscore?.teams;
+    if (!boxTeams) return null;
+    const teamBox = boxTeams.find((t: any) => t.team?.id === teamId);
+    if (!teamBox) return null;
+    const stats = teamBox.statistics || [];
+    const lookup = (names: string[]) => {
+      const found = stats.find((s: any) => names.includes(s.name));
+      return found?.displayValue ?? found?.value ?? null;
+    };
+    return {
+      fg: lookup(["fieldGoalPct", "fgPct"]),
+      three: lookup(["threePointFieldGoalPct", "threePointPct", "3PtPct"]),
+      ft: lookup(["freeThrowPct", "ftPct"]),
+      reb: lookup(["totalRebounds"]),
+      ast: lookup(["assists"]),
+      to: lookup(["turnovers", "totalTurnovers"]),
+    };
   };
 
   return (
@@ -132,6 +191,13 @@ export default function LivePage() {
               (c: any) => c.homeAway === "away"
             );
             const isLive = game.status.type.state === "in";
+            const uTeamId = "41";
+            const oppTeamId =
+              homeTeam?.team?.id === uTeamId
+                ? awayTeam?.team?.id
+                : homeTeam?.team?.id;
+            const uStats = getTeamStats(game.id, uTeamId);
+            const oppStats = oppTeamId ? getTeamStats(game.id, oppTeamId) : null;
 
             return (
               <Card key={game.id} className={isLive ? "border-primary" : ""}>
@@ -179,6 +245,32 @@ export default function LivePage() {
                       <p className="text-sm text-muted-foreground mt-4">
                         {competition.venue.fullName}
                       </p>
+                    )}
+                    {uStats && oppStats && (
+                      <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="font-semibold text-foreground">
+                            {homeTeam?.team?.abbreviation}
+                          </p>
+                          <p className="text-muted-foreground">FG%: {homeTeam?.team?.id === uTeamId ? uStats.fg ?? "—" : oppStats.fg ?? "—"}</p>
+                          <p className="text-muted-foreground">3P%: {homeTeam?.team?.id === uTeamId ? uStats.three ?? "—" : oppStats.three ?? "—"}</p>
+                          <p className="text-muted-foreground">FT%: {homeTeam?.team?.id === uTeamId ? uStats.ft ?? "—" : oppStats.ft ?? "—"}</p>
+                          <p className="text-muted-foreground">REB: {homeTeam?.team?.id === uTeamId ? uStats.reb ?? "—" : oppStats.reb ?? "—"}</p>
+                          <p className="text-muted-foreground">AST: {homeTeam?.team?.id === uTeamId ? uStats.ast ?? "—" : oppStats.ast ?? "—"}</p>
+                          <p className="text-muted-foreground">TO: {homeTeam?.team?.id === uTeamId ? uStats.to ?? "—" : oppStats.to ?? "—"}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-foreground">
+                            {awayTeam?.team?.abbreviation}
+                          </p>
+                          <p className="text-muted-foreground">FG%: {awayTeam?.team?.id === uTeamId ? uStats.fg ?? "—" : oppStats.fg ?? "—"}</p>
+                          <p className="text-muted-foreground">3P%: {awayTeam?.team?.id === uTeamId ? uStats.three ?? "—" : oppStats.three ?? "—"}</p>
+                          <p className="text-muted-foreground">FT%: {awayTeam?.team?.id === uTeamId ? uStats.ft ?? "—" : oppStats.ft ?? "—"}</p>
+                          <p className="text-muted-foreground">REB: {awayTeam?.team?.id === uTeamId ? uStats.reb ?? "—" : oppStats.reb ?? "—"}</p>
+                          <p className="text-muted-foreground">AST: {awayTeam?.team?.id === uTeamId ? uStats.ast ?? "—" : oppStats.ast ?? "—"}</p>
+                          <p className="text-muted-foreground">TO: {awayTeam?.team?.id === uTeamId ? uStats.to ?? "—" : oppStats.to ?? "—"}</p>
+                        </div>
+                      </div>
                     )}
                   </div>
                 </CardContent>

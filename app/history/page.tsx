@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { getGameSummary } from "@/lib/espn-api";
 
 const getCurrentSeasonYear = () => {
   const today = new Date();
@@ -17,6 +18,8 @@ export default function HistoryPage() {
   const [selectedYear, setSelectedYear] = useState(currentSeasonYear);
   const [schedule, setSchedule] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [summaries, setSummaries] = useState<Record<string, any>>({});
+  const [summaryLoading, setSummaryLoading] = useState(false);
 
   const years = Array.from({ length: 5 }, (_, i) => currentSeasonYear - i);
 
@@ -46,6 +49,44 @@ export default function HistoryPage() {
     fetchSchedule(selectedYear);
   }, [selectedYear]);
 
+  useEffect(() => {
+    const loadSummaries = async () => {
+      const events = schedule?.events || [];
+      const completed = events.filter(
+        (event: any) => event.competitions?.[0]?.status?.type?.completed
+      );
+      const idsToFetch = completed
+        .map((e: any) => e.id)
+        .filter((id: string) => id && !summaries[id]);
+      if (idsToFetch.length === 0) return;
+      setSummaryLoading(true);
+      try {
+        const results = await Promise.all(
+          idsToFetch.map(async (id: string) => {
+            try {
+              const data = await getGameSummary(id);
+              return { id, data };
+            } catch (e) {
+              console.error("Error fetching summary", id, e);
+              return null;
+            }
+          })
+        );
+        const next = { ...summaries };
+        results.forEach((res) => {
+          if (res?.id && res.data) {
+            next[res.id] = res.data;
+          }
+        });
+        setSummaries(next);
+      } finally {
+        setSummaryLoading(false);
+      }
+    };
+    loadSummaries();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schedule]);
+
   const games = (schedule?.events || []).filter(
     (event: any) => event.season?.year === selectedYear + 1
   );
@@ -57,6 +98,8 @@ export default function HistoryPage() {
   );
 
   const getGameResult = (event: any) => {
+    const summary = summaries[event.id];
+    const boxTeams = summary?.boxscore?.teams;
     const competition = event.competitions?.[0];
     const competitors = competition?.competitors || [];
     const uconnTeam = competitors.find((c: any) => c.team?.id === "41");
@@ -64,8 +107,8 @@ export default function HistoryPage() {
 
     if (!competition || !uconnTeam || !opponent) return null;
 
-    const extractScore = (team: any) => {
-      const score = team.score;
+    const extractScore = (team: any, boxTeam?: any) => {
+      const score = boxTeam?.score ?? team.score;
       if (!score) return { num: null, display: null };
       if (typeof score === "object") {
         const num =
@@ -92,8 +135,11 @@ export default function HistoryPage() {
       return { num: null, display: null };
     };
 
-    const uScore = extractScore(uconnTeam);
-    const oScore = extractScore(opponent);
+    const boxUconn = boxTeams?.find((t: any) => t.team?.id === "41");
+    const boxOpp = boxTeams?.find((t: any) => t.team?.id === opponent?.team?.id);
+
+    const uScore = extractScore(uconnTeam, boxUconn);
+    const oScore = extractScore(opponent, boxOpp);
     const hasScores = Boolean(uScore.display && oScore.display);
 
     let outcome: "win" | "loss" | "unknown" = "unknown";
