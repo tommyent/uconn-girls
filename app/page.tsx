@@ -21,7 +21,7 @@ export default async function Home() {
             alt="UConn Logo"
             width={120}
             height={120}
-            className="mx-auto mb-4"
+            className="mx-auto mb-4 rounded-[10px]"
           />
         )}
         <h1 className="text-5xl md:text-6xl font-bold text-primary mb-2">

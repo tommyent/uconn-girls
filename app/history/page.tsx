@@ -568,7 +568,7 @@ export default function HistoryPage() {
                             <img
                               src={awayTeam.team.logos[0].href}
                               alt={awayTeam.team.displayName}
-                              className="h-10 w-10 object-contain"
+                              className="h-10 w-10 object-contain rounded-[10px]"
                             />
                           )}
                           <div className="space-y-1">
@@ -609,7 +609,7 @@ export default function HistoryPage() {
                             <img
                               src={homeTeam.team.logos[0].href}
                               alt={homeTeam.team.displayName}
-                              className="h-10 w-10 object-contain"
+                              className="h-10 w-10 object-contain rounded-[10px]"
                             />
                           )}
                         </div>
