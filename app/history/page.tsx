@@ -533,70 +533,64 @@ export default function HistoryPage() {
                   : [];
 
                 return (
-                  <Card
-                    key={event.id}
-                    className="overflow-hidden bg-[#0c0c15] border border-border/50 shadow-lg"
-                  >
-                    <CardHeader className="p-0">
-                      <div className="bg-gradient-to-r from-primary/80 to-primary/40 px-4 py-6 text-white">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-3">
-                            {homeTeam?.team?.logos?.[0]?.href && (
-                              <img
-                                src={homeTeam.team.logos[0].href}
-                                alt={homeTeam.team.displayName}
-                                className="h-10 w-10 object-contain"
-                              />
-                            )}
-                            <div className="space-y-1">
-                              <p className="text-xs tracking-wide font-semibold uppercase">
-                                {homeTeam?.team?.shortDisplayName || "HOME"}
-                              </p>
-                              <Badge variant="secondary" className="text-xs">
-                                HOME
-                              </Badge>
-                            </div>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-3xl md:text-4xl font-bold text-white">
-                              {result.uconnScore} - {result.opponentScore}
+                  <div key={event.id} className="space-y-3">
+                    <div className="bg-gradient-to-r from-primary/80 to-primary/40 px-4 py-6 text-white rounded-2xl shadow-lg">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          {homeTeam?.team?.logos?.[0]?.href && (
+                            <img
+                              src={homeTeam.team.logos[0].href}
+                              alt={homeTeam.team.displayName}
+                              className="h-10 w-10 object-contain"
+                            />
+                          )}
+                          <div className="space-y-1">
+                            <p className="text-xs tracking-wide font-semibold uppercase">
+                              {homeTeam?.team?.shortDisplayName || "HOME"}
                             </p>
-                            <p className="text-sm font-semibold uppercase mt-1">
-                              {competition?.status?.type?.shortDetail || "Final"}
-                            </p>
-                            <p className="text-xs">
-                              {new Date(event.date).toLocaleDateString(
-                                "en-US",
-                                {
-                                  weekday: "short",
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
-                                }
-                              )}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <div className="text-right space-y-1">
-                              <p className="text-xs tracking-wide font-semibold uppercase">
-                                {awayTeam?.team?.shortDisplayName || "AWAY"}
-                              </p>
-                              <Badge variant="secondary" className="text-xs">
-                                AWAY
-                              </Badge>
-                            </div>
-                            {awayTeam?.team?.logos?.[0]?.href && (
-                              <img
-                                src={awayTeam.team.logos[0].href}
-                                alt={awayTeam.team.displayName}
-                                className="h-10 w-10 object-contain"
-                              />
-                            )}
+                            <Badge variant="secondary" className="text-xs">
+                              HOME
+                            </Badge>
                           </div>
                         </div>
+                        <div className="text-center">
+                          <p className="text-3xl md:text-4xl font-bold text-white">
+                            {result.uconnScore} - {result.opponentScore}
+                          </p>
+                          <p className="text-sm font-semibold uppercase mt-1">
+                            {competition?.status?.type?.shortDetail || "Final"}
+                          </p>
+                          <p className="text-xs">
+                            {new Date(event.date).toLocaleDateString("en-US", {
+                              weekday: "short",
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right space-y-1">
+                            <p className="text-xs tracking-wide font-semibold uppercase">
+                              {awayTeam?.team?.shortDisplayName || "AWAY"}
+                            </p>
+                            <Badge variant="secondary" className="text-xs">
+                              AWAY
+                            </Badge>
+                          </div>
+                          {awayTeam?.team?.logos?.[0]?.href && (
+                            <img
+                              src={awayTeam.team.logos[0].href}
+                              alt={awayTeam.team.displayName}
+                              className="h-10 w-10 object-contain"
+                            />
+                          )}
+                        </div>
                       </div>
-                    </CardHeader>
-                    <CardContent className="p-4 space-y-3">
+                    </div>
+
+                    <Card className="overflow-hidden bg-[#0c0c15] border border-border/50 shadow-lg">
+                      <CardContent className="p-4 space-y-3">
                       {(homeStats || awayStats) && (
                         <div className="rounded-xl border border-border/50 bg-card/50 p-3 space-y-3">
                           <p className="text-sm font-semibold text-foreground mb-1">
