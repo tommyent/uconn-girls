@@ -59,9 +59,9 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [summaries, setSummaries] = useState<Record<string, any>>({});
   const [summaryLoading, setSummaryLoading] = useState(false);
-  const [scoreboardPlayers, setScoreboardPlayers] = useState<
-    Record<string, Record<string, any[]>>
-  >({});
+  const [scoreboardPlayers, setScoreboardPlayers] = useState<Record<string, any>>(
+    {}
+  );
   const [scoreboardLoading, setScoreboardLoading] = useState(false);
   const [activeTabs, setActiveTabs] = useState<Record<string, string>>({});
 
