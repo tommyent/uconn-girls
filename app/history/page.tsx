@@ -20,6 +20,10 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [summaries, setSummaries] = useState<Record<string, any>>({});
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [scoreboardPlayers, setScoreboardPlayers] = useState<
+    Record<string, Record<string, any[]>>
+  >({});
+  const [scoreboardLoading, setScoreboardLoading] = useState(false);
 
   const years = Array.from({ length: 5 }, (_, i) => currentSeasonYear - i);
 
@@ -49,6 +53,7 @@ export default function HistoryPage() {
     fetchSchedule(selectedYear);
   }, [selectedYear]);
 
+  // Fetch per-game summaries (boxscore stats)
   useEffect(() => {
     const loadSummaries = async () => {
       const events = schedule?.events || [];
@@ -84,6 +89,78 @@ export default function HistoryPage() {
       }
     };
     loadSummaries();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schedule]);
+
+  // Fetch scoreboard data by date to capture player stats if summaries are missing
+  useEffect(() => {
+    const loadScoreboards = async () => {
+      const events = schedule?.events || [];
+      const completed = events.filter(
+        (event: any) => event.competitions?.[0]?.status?.type?.completed
+      );
+      const dates = Array.from(
+        new Set(
+          completed
+            .map((e: any) => e.date)
+            .filter(Boolean)
+            .map((d: string) => {
+              const dt = new Date(d);
+              const yyyy = dt.getUTCFullYear();
+              const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
+              const dd = String(dt.getUTCDate()).padStart(2, "0");
+              return `${yyyy}${mm}${dd}`;
+            })
+        )
+      );
+
+      const neededDates = dates.filter((d) => !scoreboardPlayers[`date:${d}`]);
+      if (neededDates.length === 0) return;
+      setScoreboardLoading(true);
+      try {
+        const results = await Promise.all(
+          neededDates.map(async (date) => {
+            try {
+              const res = await fetch(
+                `http://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard?dates=${date}&limit=300`,
+                { cache: "no-store" }
+              );
+              if (!res.ok) return null;
+              const data = await res.json();
+              return { date, data };
+            } catch {
+              return null;
+            }
+          })
+        );
+
+        const next = { ...scoreboardPlayers };
+        results.forEach((res) => {
+          if (!res?.data?.events) return;
+          const mapByGame: Record<string, Record<string, any[]>> = {};
+          res.data.events.forEach((ev: any) => {
+            const comp = ev.competitions?.[0];
+            const athletes = comp?.athletes || [];
+            athletes.forEach((ath: any) => {
+              const teamId = ath.team?.id;
+              if (!teamId || !ev.id) return;
+              if (!mapByGame[ev.id]) mapByGame[ev.id] = {};
+              if (!mapByGame[ev.id][teamId]) mapByGame[ev.id][teamId] = [];
+              mapByGame[ev.id][teamId].push(ath);
+            });
+          });
+          next[`date:${res.date}`] = mapByGame;
+          // Also flatten gameId -> team map for quick lookup
+          Object.entries(mapByGame).forEach(([gameId, teams]) => {
+            next[gameId] = teams;
+          });
+        });
+        setScoreboardPlayers(next);
+      } finally {
+        setScoreboardLoading(false);
+      }
+    };
+    loadScoreboards();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [schedule]);
 
@@ -162,7 +239,7 @@ export default function HistoryPage() {
     };
   };
 
-  const getPlayerLines = (eventId: string, teamId: string) => {
+  const normalizeSummaryPlayers = (eventId: string, teamId: string) => {
     const summary = summaries[eventId];
     const container = summary?.boxscore?.players?.find(
       (p: any) => p.team?.id === teamId
@@ -203,6 +280,53 @@ export default function HistoryPage() {
     };
 
     return athleteStats.map(normalize).filter((p: any) => p.name);
+  };
+
+  const normalizeScoreboardPlayers = (eventId: string, teamId: string) => {
+    const teamMap = scoreboardPlayers[eventId];
+    const players = teamMap?.[teamId] || [];
+    const normalize = (ath: any) => {
+      const statsRaw = ath.stats || ath.statistics || {};
+      const getStat = (keys: string[]) => {
+        if (Array.isArray(statsRaw)) {
+          return null;
+        }
+        for (const k of keys) {
+          if (statsRaw[k] !== undefined && statsRaw[k] !== null) {
+            return statsRaw[k];
+          }
+        }
+        return null;
+      };
+
+      return {
+        id: ath?.athlete?.id || ath?.id || ath?.uid || ath?.name,
+        name: ath?.athlete?.displayName || ath?.displayName || ath?.name,
+        mins: getStat(["minutes", "MIN"]),
+        pts: getStat(["points", "PTS"]),
+        reb: getStat(["rebounds", "REB", "totalRebounds"]),
+        ast: getStat(["assists", "AST"]),
+        fg: getStat([
+          "fieldGoalsMade-fieldGoalsAttempted",
+          "fgm-fga",
+          "fg",
+        ]),
+        three: getStat([
+          "threePointFieldGoalsMade-threePointFieldGoalsAttempted",
+          "3ptm-3pta",
+          "threePt",
+        ]),
+      };
+    };
+
+    return players.map(normalize).filter((p: any) => p.name);
+  };
+
+  const getPlayerLines = (eventId: string, teamId: string) => {
+    const fromSummary = normalizeSummaryPlayers(eventId, teamId);
+    if (fromSummary.length > 0) return fromSummary;
+    const fromScoreboard = normalizeScoreboardPlayers(eventId, teamId);
+    return fromScoreboard;
   };
 
   const completedResults = completedGames
@@ -397,7 +521,7 @@ export default function HistoryPage() {
 
                           {result.boxPlayers && (
                             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                              {[homeTeam, opponent].map((team) => {
+                              {[event.competitions?.[0]?.competitors?.find((c: any) => c.homeAway === "home"), event.competitions?.[0]?.competitors?.find((c: any) => c.homeAway === "away")].map((team) => {
                                 if (!team?.team?.id) return null;
                                 const players = getPlayerLines(
                                   event.id,
