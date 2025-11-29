@@ -673,13 +673,13 @@ export default function HistoryPage() {
 
                           {(homePlayers.length > 0 || awayPlayers.length > 0) && (
                             <div className="space-y-3">
-                          <div className="flex items-center gap-0 text-sm font-semibold rounded-full overflow-hidden border border-border/70">
+                          <div className="flex items-center gap-6 text-sm font-semibold">
                             <button
-                              className={`w-1/2 py-2 transition ${
+                              className={`pb-2 border-b-2 ${
                                 (activeTabs[event.id] || homeTeam?.team?.id) ===
                                 homeTeam?.team?.id
-                                  ? "bg-primary/20 text-foreground"
-                                  : "bg-transparent text-muted-foreground"
+                                  ? "border-primary text-foreground"
+                                  : "border-transparent text-muted-foreground"
                               }`}
                               onClick={() =>
                                 setActiveTabs((prev) => ({
@@ -691,11 +691,11 @@ export default function HistoryPage() {
                               {homeTeam?.team?.shortDisplayName || "Home"}
                             </button>
                             <button
-                              className={`w-1/2 py-2 transition ${
+                              className={`pb-2 border-b-2 ${
                                 (activeTabs[event.id] || homeTeam?.team?.id) ===
                                 awayTeam?.team?.id
-                                  ? "bg-primary/20 text-foreground"
-                                  : "bg-transparent text-muted-foreground"
+                                  ? "border-primary text-foreground"
+                                  : "border-transparent text-muted-foreground"
                               }`}
                               onClick={() =>
                                 setActiveTabs((prev) => ({
