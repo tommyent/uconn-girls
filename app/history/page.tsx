@@ -596,9 +596,9 @@ export default function HistoryPage() {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 space-y-4">
+                    <CardContent className="p-4 space-y-3">
                       {(homeStats || awayStats) && (
-                        <div className="rounded-xl border border-border/50 bg-card/50 p-4 space-y-3">
+                        <div className="rounded-xl border border-border/50 bg-card/50 p-3 space-y-3">
                           <p className="text-sm font-semibold text-foreground mb-1">
                             Team Comparison
                           </p>
@@ -671,8 +671,8 @@ export default function HistoryPage() {
                         </div>
                       )}
 
-                          {(homePlayers.length > 0 || awayPlayers.length > 0) && (
-                            <div className="space-y-3">
+                      {(homePlayers.length > 0 || awayPlayers.length > 0) && (
+                        <div className="space-y-3">
                           <div className="flex items-center text-sm font-semibold">
                             <button
                               className={`flex-1 text-center pb-2 border-b-2 ${
