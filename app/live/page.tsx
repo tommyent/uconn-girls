@@ -26,7 +26,7 @@ export default function LivePage() {
   const fetchScores = async () => {
     try {
       const response = await fetch(
-        "http://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard"
+        "https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard"
       );
       const data = await response.json();
       setScoreboard(data);
@@ -43,7 +43,7 @@ export default function LivePage() {
     try {
       const seasonParam = currentSeasonYear + 1; // ESPN uses season end year
       const response = await fetch(
-        `http://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/teams/41/schedule?season=${seasonParam}`
+        `https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/teams/41/schedule?season=${seasonParam}`
       );
       const data = await response.json();
       const events = data?.events || [];

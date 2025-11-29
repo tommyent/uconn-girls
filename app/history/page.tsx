@@ -33,7 +33,7 @@ export default function HistoryPage() {
     try {
       const seasonParam = year + 1; // ESPN season param is the end year
       const response = await fetch(
-        `http://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/teams/41/schedule?season=${seasonParam}`
+        `https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/teams/41/schedule?season=${seasonParam}`
       );
       if (!response.ok) {
         setSchedule({ events: [] });
@@ -122,7 +122,7 @@ export default function HistoryPage() {
           neededDates.map(async (date) => {
             try {
               const res = await fetch(
-                `http://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard?dates=${date}&limit=300`,
+                `https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard?dates=${date}&limit=300`,
                 { cache: "no-store" }
               );
               if (!res.ok) return null;

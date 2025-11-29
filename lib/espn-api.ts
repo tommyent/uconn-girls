@@ -1,4 +1,4 @@
-const ESPN_BASE_URL = 'http://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball';
+const ESPN_BASE_URL = 'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball';
 const CORE_BASE_URL = 'https://sports.core.api.espn.com/apis/v2/sports/basketball/womens-college-basketball';
 const UCONN_TEAM_ID = '41';
 
