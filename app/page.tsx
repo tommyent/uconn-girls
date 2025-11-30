@@ -10,7 +10,17 @@ export const revalidate = 300; // Revalidate every 5 minutes
 export default async function Home() {
   const teamData = await getUConnTeamInfo();
   const team = teamData?.team;
-  const nextEvent = team?.nextEvent?.[0];
+  const nextEvent =
+    team?.nextEvent
+      ?.filter((ev: any) => {
+        const d = new Date(ev.date);
+        const today = new Date();
+        return d.getTime() >= today.getTime();
+      })
+      ?.sort(
+        (a: any, b: any) =>
+          new Date(a.date).getTime() - new Date(b.date).getTime()
+      )?.[0] || null;
   const competition = nextEvent?.competitions?.[0];
   const homeTeam = competition?.competitors?.find(
     (c: any) => c.homeAway === "home"

@@ -1,0 +1,12 @@
+[
+  {"name":"ESPN","url":"https://a.espncdn.com/redesign/assets/img/logos/espn-icon.svg"},
+  {"name":"ESPN2","url":"https://a.espncdn.com/redesign/assets/img/logos/espn-icon.svg"},
+  {"name":"ESPN+","url":"https://a.espncdn.com/redesign/assets/img/logos/espnplus-icon.svg"},
+  {"name":"FS1","url":"https://upload.wikimedia.org/wikipedia/commons/5/5c/Fox_Sports_1_logo_2015.svg"},
+  {"name":"FOX","url":"https://upload.wikimedia.org/wikipedia/commons/4/4f/Fox_Broadcasting_Company_logo.svg"},
+  {"name":"TNT","url":"https://upload.wikimedia.org/wikipedia/commons/7/7e/TNT_Logo_2016.svg"},
+  {"name":"Peacock","url":"https://upload.wikimedia.org/wikipedia/commons/9/90/NBC_Peacock_2013.svg"},
+  {"name":"ABC","url":"https://upload.wikimedia.org/wikipedia/commons/2/28/ABC_Network_logo.svg"},
+  {"name":"CBS","url":"https://upload.wikimedia.org/wikipedia/commons/e/ee/CBS_logo_%282020%29.svg"},
+  {"name":"CBS Sports","url":"https://upload.wikimedia.org/wikipedia/commons/9/96/CBS_Sports_Network_logo.svg"}
+]

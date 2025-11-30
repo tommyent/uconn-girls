@@ -12,6 +12,35 @@ const getCurrentSeasonYear = () => {
   return today.getMonth() >= 6 ? today.getFullYear() : today.getFullYear() - 1;
 };
 
+// Use text-only pills for networks to avoid missing local assets.
+export const NETWORK_LOGOS: Record<string, string | null> = {
+  ESPN: "/networks/espn.svg",
+  ESPN2: "/networks/espn.svg",
+  "ESPN+": "/networks/espnplus.svg",
+  FS1: "/networks/fs1.svg",
+  FOX: "/networks/fox.svg",
+  TNT: "/networks/tnt.svg",
+  Peacock: "/networks/peacock.svg",
+  ABC: "/networks/abc.svg",
+  CBS: "/networks/cbs.svg",
+  "CBS Sports": "/networks/cbssports.svg",
+};
+
+const getNetworks = (competition: any): string[] => {
+  const broadcasts = competition?.broadcasts || competition?.broadcast || [];
+  const names: string[] = [];
+  broadcasts.forEach((b: any) => {
+    const n =
+      b?.media?.shortName ||
+      b?.media?.name ||
+      b?.shortName ||
+      b?.name ||
+      (Array.isArray(b?.names) ? b.names[0] : null);
+    if (n) names.push(n);
+  });
+  return Array.from(new Set(names));
+};
+
 export function LiveWidget() {
   const currentSeasonYear = getCurrentSeasonYear();
   const bannedMatchups = ["CONN @ XAV"];
@@ -23,6 +52,54 @@ export function LiveWidget() {
   const [summaries, setSummaries] = useState<Record<string, any>>({});
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [coverageNetworks, setCoverageNetworks] = useState<Record<string, string[]>>({});
+
+  const fetchCoverageNetworks = async (
+    eventId: string,
+    eventDate: string,
+    opponentName: string
+  ) => {
+    try {
+      const date = new Date(eventDate);
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, "0");
+      const dd = String(date.getDate()).padStart(2, "0");
+      const coverageUrl = `https://uconnhuskies.com/coverage?page=1&date=${yyyy}-${mm}-${dd}`;
+      const res = await fetch(coverageUrl);
+      if (!res.ok) return;
+      const html = await res.text();
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const rows = Array.from(doc.querySelectorAll("tr"));
+      const nets: string[] = [];
+      rows.forEach((row) => {
+        const cells = row.querySelectorAll("td");
+        if (cells.length < 4) return;
+        const sport = cells[1]?.textContent?.toLowerCase() || "";
+        if (!sport.includes("women")) return;
+        const opponent = cells[2]?.textContent?.trim().toLowerCase() || "";
+        if (
+          opponentName &&
+          opponent &&
+          !opponentName.toLowerCase().includes(opponent) &&
+          !opponent.includes(opponentName.toLowerCase())
+        )
+          return;
+        const tv = cells[3]?.textContent?.trim() || "";
+        if (tv) {
+          tv
+            .split(/[\/,&]/)
+            .map((t) => t.trim())
+            .filter(Boolean)
+            .forEach((t) => nets.push(t));
+        }
+      });
+      if (nets.length > 0) {
+        setCoverageNetworks((prev) => ({ ...prev, [eventId]: Array.from(new Set(nets)) }));
+      }
+    } catch {
+      // ignore failures; UI will fallback to existing networks
+    }
+  };
 
   const fetchScores = async () => {
     try {
@@ -43,13 +120,46 @@ export function LiveWidget() {
     setUpcomingLoading(true);
     try {
       const seasonParam = currentSeasonYear + 1;
-      const response = await fetch(
-        `https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/teams/41/schedule?season=${seasonParam}`
-      );
-      const data = await response.json();
-      const events = (data?.events || []).filter(
+
+      // primary schedule (team 41)
+      const [respPrimary, respAlt] = await Promise.all([
+        fetch(
+          `https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/teams/41/schedule?season=${seasonParam}`
+        ),
+        // broadcast-rich fallback (team 58 as noted)
+        fetch(
+          `https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/teams/58/schedule?season=${seasonParam}`
+        ).catch(() => null),
+      ]);
+
+      const data = await respPrimary.json();
+      let events = (data?.events || []).filter(
         (ev: any) => !bannedMatchups.includes(ev.shortName)
       );
+
+      // Merge broadcasts from alt schedule if present
+      if (respAlt && respAlt.ok) {
+        const altData = await respAlt.json();
+        const altEvents: any[] = altData?.events || [];
+        const altMap = new Map<string, any>();
+        altEvents.forEach((ev: any) => {
+          if (ev?.id) altMap.set(ev.id, ev);
+        });
+        events = events.map((ev: any) => {
+          const alt = altMap.get(ev.id);
+          if (alt?.competitions?.[0]?.broadcasts?.length && !ev?.competitions?.[0]?.broadcasts?.length) {
+            const clone = { ...ev };
+            clone.competitions = [...(ev.competitions || [])];
+            clone.competitions[0] = {
+              ...(ev.competitions?.[0] || {}),
+              broadcasts: alt.competitions?.[0]?.broadcasts || [],
+            };
+            return clone;
+          }
+          return ev;
+        });
+      }
+
       const now = new Date();
       const upcomingEvents = events
         .filter((event: any) => {
@@ -82,6 +192,25 @@ export function LiveWidget() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    // backfill coverage networks for upcoming games missing broadcasts
+    (async () => {
+      if (!upcoming || upcoming.length === 0) return;
+      for (const event of upcoming) {
+        const competition = event?.competitions?.[0];
+        if (!competition) continue;
+        const nets = getNetworks(competition);
+        if (nets && nets.length > 0) continue;
+        const opponent = competition.competitors?.find(
+          (c: any) => c.team?.id !== "41"
+        );
+        const opponentName = opponent?.team?.displayName || "";
+        await fetchCoverageNetworks(event.id, event.date, opponentName);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [upcoming]);
 
   const uconnGames = scoreboard?.events
     ?.filter((event: any) =>
@@ -358,7 +487,14 @@ export function LiveWidget() {
               if (!competition || !uconnTeam || !opponent) return null;
               const isHome = uconnTeam.homeAway === "home";
               const venue = competition.venue?.fullName;
-              return (
+              const networks = getNetworks(competition);
+              const mergedNetworks =
+                networks.length > 0
+                  ? networks
+                  : coverageNetworks[competition.id] ||
+                    coverageNetworks[event.id] ||
+                    [];
+            return (
                 <Card
                   key={event.id}
                   className="bg-card border border-border/40 rounded-2xl shadow-sm"
@@ -419,6 +555,30 @@ export function LiveWidget() {
                         })}
                       </p>
                       {venue && <p>{venue}</p>}
+                      <div className="mt-2 flex items-center flex-wrap gap-2">
+                        <span className="text-xs font-semibold uppercase text-muted-foreground">
+                          Watch on
+                        </span>
+                        {mergedNetworks.length > 0 ? (
+                          mergedNetworks.map((n) => (
+                            <div key={n} className="inline-flex items-center">
+                              {NETWORK_LOGOS[n] ? (
+                                <img
+                                  src={NETWORK_LOGOS[n] as string}
+                                  alt={n}
+                                  className="h-6 w-14 object-contain rounded-full bg-muted px-2 py-1"
+                                />
+                              ) : (
+                                <span className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-xs font-semibold text-foreground">
+                                  {n}
+                                </span>
+                              )}
+                            </div>
+                          ))
+                        ) : (
+                          <span className="text-xs text-muted-foreground">TBD</span>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

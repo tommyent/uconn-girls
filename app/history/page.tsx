@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { getGameSummary } from "@/lib/espn-api";
+import { NETWORK_LOGOS } from "@/components/live-widget";
 
 const CACHE_TTL_MS = 1000 * 60 * 30; // 30 minutes
 
@@ -37,7 +38,7 @@ const writeCache = (key: string, data: any) => {
   }
 };
 
-const getCurrentSeasonYear = () => {
+  const getCurrentSeasonYear = () => {
   const today = new Date();
   // NCAA season spans fall-spring; before July we are still in the prior season
   return today.getMonth() >= 6 ? today.getFullYear() : today.getFullYear() - 1;
@@ -94,6 +95,7 @@ export default function HistoryPage() {
   );
   const [scoreboardLoading, setScoreboardLoading] = useState(false);
   const [activeTabs, setActiveTabs] = useState<Record<string, string>>({});
+  const [coverageNetworks, setCoverageNetworks] = useState<Record<string, string[]>>({});
 
   const years = Array.from({ length: 5 }, (_, i) => currentSeasonYear - i);
 
@@ -109,15 +111,47 @@ export default function HistoryPage() {
     }
     try {
       const seasonParam = year + 1; // ESPN season param is the end year
-      const response = await fetch(
-        `https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/teams/41/schedule?season=${seasonParam}`
-      );
-      if (!response.ok) {
+      const [respPrimary, respAlt] = await Promise.all([
+        fetch(
+          `https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/teams/41/schedule?season=${seasonParam}`
+        ),
+        fetch(
+          `https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/teams/58/schedule?season=${seasonParam}`
+        ).catch(() => null),
+      ]);
+
+      if (!respPrimary.ok) {
         setSchedule({ events: [] });
         return;
       }
-      const data = await response.json();
-      const safeData = data ?? { events: [] };
+
+      const data = await respPrimary.json();
+      let safeData = data ?? { events: [] };
+
+      // Merge broadcasts from alt schedule (team 58) if primary missing them
+      if (respAlt && respAlt.ok) {
+        const altData = await respAlt.json();
+        const altEvents: any[] = altData?.events || [];
+        const altMap = new Map<string, any>();
+        altEvents.forEach((ev: any) => {
+          if (ev?.id) altMap.set(ev.id, ev);
+        });
+        const mergedEvents = (safeData.events || []).map((ev: any) => {
+          const alt = altMap.get(ev.id);
+          if (alt?.competitions?.[0]?.broadcasts?.length && !ev?.competitions?.[0]?.broadcasts?.length) {
+            const clone = { ...ev };
+            clone.competitions = [...(ev.competitions || [])];
+            clone.competitions[0] = {
+              ...(ev.competitions?.[0] || {}),
+              broadcasts: alt.competitions?.[0]?.broadcasts || [],
+            };
+            return clone;
+          }
+          return ev;
+        });
+        safeData = { ...safeData, events: mergedEvents };
+      }
+
       setSchedule(safeData);
       writeCache(cacheKey, safeData);
     } catch (error) {
@@ -125,6 +159,68 @@ export default function HistoryPage() {
       setSchedule({ events: [] });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getNetworks = (competition: any): string[] => {
+    const broadcasts = competition?.broadcasts || competition?.broadcast || [];
+    const names: string[] = [];
+    broadcasts.forEach((b: any) => {
+      const n =
+        b?.media?.shortName ||
+        b?.media?.name ||
+        b?.shortName ||
+        b?.name ||
+        (Array.isArray(b?.names) ? b.names[0] : null);
+      if (n) names.push(n);
+    });
+    return Array.from(new Set(names));
+  };
+
+  const fetchCoverageNetworks = async (
+    eventId: string,
+    eventDate: string,
+    opponentName: string
+  ) => {
+    try {
+      const date = new Date(eventDate);
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, "0");
+      const dd = String(date.getDate()).padStart(2, "0");
+      const coverageUrl = `https://uconnhuskies.com/coverage?page=1&date=${yyyy}-${mm}-${dd}`;
+      const res = await fetch(coverageUrl);
+      if (!res.ok) return;
+      const html = await res.text();
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const rows = Array.from(doc.querySelectorAll("tr"));
+      const nets: string[] = [];
+      rows.forEach((row) => {
+        const cells = row.querySelectorAll("td");
+        if (cells.length < 4) return;
+        const sport = cells[1]?.textContent?.toLowerCase() || "";
+        if (!sport.includes("women")) return;
+        const opponent = cells[2]?.textContent?.trim().toLowerCase() || "";
+        if (
+          opponentName &&
+          opponent &&
+          !opponentName.toLowerCase().includes(opponent) &&
+          !opponent.includes(opponentName.toLowerCase())
+        )
+          return;
+        const tv = cells[3]?.textContent?.trim() || "";
+        if (tv) {
+          tv
+            .split(/[\/,&]/)
+            .map((t) => t.trim())
+            .filter(Boolean)
+            .forEach((t) => nets.push(t));
+        }
+      });
+      if (nets.length > 0) {
+        setCoverageNetworks((prev) => ({ ...prev, [eventId]: Array.from(new Set(nets)) }));
+      }
+    } catch {
+      // ignore failures
     }
   };
 
@@ -142,6 +238,28 @@ export default function HistoryPage() {
     );
     if (cachedPlayers) setScoreboardPlayers(cachedPlayers);
   }, [selectedYear]);
+
+  useEffect(() => {
+    const prefetchCoverage = async () => {
+      if (!schedule?.events) return;
+      const upcomingOnly = schedule.events.filter(
+        (event: any) => !event.competitions?.[0]?.status?.type?.completed
+      );
+      for (const event of upcomingOnly) {
+        const competition = event?.competitions?.[0];
+        if (!competition) continue;
+        const nets = getNetworks(competition);
+        if (nets && nets.length > 0) continue;
+        const opponent = competition.competitors?.find(
+          (c: any) => c.team?.id !== "41"
+        );
+        const opponentName = opponent?.team?.displayName || "";
+        await fetchCoverageNetworks(event.id, event.date, opponentName);
+      }
+    };
+    prefetchCoverage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schedule]);
 
   // Fetch per-game summaries (boxscore stats)
   useEffect(() => {
@@ -998,11 +1116,16 @@ export default function HistoryPage() {
                   const opponent = competition.competitors.find(
                     (c: any) => c.team.id !== "41"
                   );
+                  const networks = getNetworks(competition);
+                  const mergedNetworks =
+                    networks.length > 0
+                      ? networks
+                      : coverageNetworks[event.id] || [];
 
-                  if (!opponent) return null;
+                if (!opponent) return null;
 
-                  return (
-                    <Card
+                return (
+                  <Card
                       key={event.id}
                       className="bg-card border border-border/40 rounded-2xl shadow-sm"
                     >
@@ -1064,6 +1187,32 @@ export default function HistoryPage() {
                                 alt={opponent.team.displayName}
                                 className="h-12 w-12 rounded-[10px] object-contain"
                               />
+                            )}
+                          </div>
+                        </div>
+                        <div className="px-2">
+                          <div className="mt-1 flex items-center flex-wrap gap-2">
+                            <span className="text-xs font-semibold uppercase text-muted-foreground">
+                              Watch on
+                            </span>
+                            {mergedNetworks.length > 0 ? (
+                              Array.from(new Set(mergedNetworks)).map((n) => (
+                                <span key={n} className="inline-flex items-center">
+                                  {NETWORK_LOGOS[n] ? (
+                                    <img
+                                      src={NETWORK_LOGOS[n] as string}
+                                      alt={n}
+                                      className="h-6 w-14 object-contain rounded-full bg-muted px-2 py-1"
+                                    />
+                                  ) : (
+                                    <span className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-xs font-semibold text-foreground">
+                                      {n}
+                                    </span>
+                                  )}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-xs text-muted-foreground">TBD</span>
                             )}
                           </div>
                         </div>
