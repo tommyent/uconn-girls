@@ -1,7 +1,7 @@
 import { getUConnTeamInfo } from "@/lib/espn-api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Calendar, TrendingUp } from "lucide-react";
+import { Trophy, TrendingUp } from "lucide-react";
 import Image from "next/image";
 import { HomeLiveWidget } from "@/components/home-live";
 
@@ -10,24 +10,6 @@ export const revalidate = 300; // Revalidate every 5 minutes
 export default async function Home() {
   const teamData = await getUConnTeamInfo();
   const team = teamData?.team;
-  const nextEvent =
-    team?.nextEvent
-      ?.filter((ev: any) => {
-        const d = new Date(ev.date);
-        const now = new Date();
-        return d.getTime() >= now.getTime();
-      })
-      ?.sort(
-        (a: any, b: any) =>
-          new Date(a.date).getTime() - new Date(b.date).getTime()
-      )?.[0] || null;
-  const competition = nextEvent?.competitions?.[0];
-  const homeTeam = competition?.competitors?.find(
-    (c: any) => c.homeAway === "home"
-  );
-  const awayTeam = competition?.competitors?.find(
-    (c: any) => c.homeAway === "away"
-  );
 
   return (
     <main className="min-h-screen p-6 max-w-screen-xl mx-auto">
@@ -81,80 +63,6 @@ export default async function Home() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-6 w-6 text-primary" />
-              Next Game
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {nextEvent ? (
-              <div className="space-y-3">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    {awayTeam?.team?.logos?.[0]?.href && (
-                      <Image
-                        src={awayTeam.team.logos[0].href}
-                        alt={awayTeam.team.displayName}
-                        width={48}
-                        height={48}
-                        className="rounded-lg object-contain"
-                      />
-                    )}
-                    <div className="space-y-1">
-                      <div className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-rose-500 text-white">
-                        Away
-                      </div>
-                      <p className="font-semibold text-foreground">
-                        {awayTeam?.team?.displayName || "TBD"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-sm font-semibold text-muted-foreground">at</div>
-                  <div className="flex items-center gap-2">
-                    {homeTeam?.team?.logos?.[0]?.href && (
-                      <Image
-                        src={homeTeam.team.logos[0].href}
-                        alt={homeTeam.team.displayName}
-                        width={48}
-                        height={48}
-                        className="rounded-lg object-contain"
-                      />
-                    )}
-                    <div className="space-y-1">
-                      <div className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-emerald-500 text-white">
-                        Home
-                      </div>
-                      <p className="font-semibold text-foreground">
-                        {homeTeam?.team?.displayName || "TBD"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                {awayTeam?.team && homeTeam?.team ? (
-                  <p className="sr-only">
-                    {awayTeam.team.displayName} @ {homeTeam.team.displayName}
-                  </p>
-                ) : (
-                  <p className="sr-only">{nextEvent.shortName}</p>
-                )}
-                <p className="text-muted-foreground">
-                  {new Date(nextEvent.date).toLocaleString("en-US", {
-                    timeZone: "America/New_York",
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
-                </p>
-              </div>
-            ) : (
-              <p className="text-muted-foreground">No upcoming games</p>
-            )}
-          </CardContent>
-        </Card>
       </div>
 
       {/* Live + Upcoming */}

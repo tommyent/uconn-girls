@@ -116,16 +116,31 @@ export function LiveWidget() {
       const upcomingEvents = events
         .filter((event: any) => {
           const status = event.competitions?.[0]?.status?.type;
-          const eventDate = new Date(event.date);
           if (event.season?.year !== seasonParam) return false;
-          const notCompleted = !status?.completed;
-          return notCompleted && eventDate >= new Date(now.toDateString());
+          const isCompleted =
+            status?.completed === true || status?.state === "post";
+          const inProgress = status?.state === "in";
+          return !isCompleted && !inProgress;
         })
         .sort(
           (a: any, b: any) =>
             new Date(a.date).getTime() - new Date(b.date).getTime()
         );
-      setUpcoming(upcomingEvents);
+
+      if (upcomingEvents.length === 0 && events.length > 0) {
+        const future = events
+          .filter((ev: any) => {
+            const d = new Date(ev.date);
+            return d.getTime() >= now.getTime() - 24 * 60 * 60 * 1000;
+          })
+          .sort(
+            (a: any, b: any) =>
+              new Date(a.date).getTime() - new Date(b.date).getTime()
+          );
+        setUpcoming(future.length > 0 ? future.slice(0, 3) : events.slice(0, 1));
+      } else {
+        setUpcoming(upcomingEvents);
+      }
     } catch (error) {
       console.error("Error fetching schedule:", error);
       setUpcoming([]);
@@ -160,7 +175,13 @@ export function LiveWidget() {
   });
 
   const displayGames =
-    (uconnGames && uconnGames.length > 0 ? uconnGames : todayUpcoming) || [];
+    (uconnGames && uconnGames.length > 0
+      ? uconnGames
+      : todayUpcoming.length > 0
+      ? todayUpcoming
+      : upcoming && upcoming.length > 0
+      ? upcoming.slice(0, 1)
+      : []) || [];
 
   useEffect(() => {
     const fetchSummaries = async () => {
