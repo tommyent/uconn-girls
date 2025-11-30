@@ -14,8 +14,8 @@ export default async function Home() {
     team?.nextEvent
       ?.filter((ev: any) => {
         const d = new Date(ev.date);
-        const today = new Date();
-        return d.getTime() >= today.getTime();
+        const now = new Date();
+        return d.getTime() >= now.getTime();
       })
       ?.sort(
         (a: any, b: any) =>
