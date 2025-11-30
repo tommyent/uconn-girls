@@ -43,7 +43,7 @@ const getNetworks = (competition: any): string[] => {
 
 export function LiveWidget() {
   const currentSeasonYear = getCurrentSeasonYear();
-  const bannedMatchups = ["CONN @ XAV"];
+  const bannedMatchups: string[] = [];
   const [scoreboard, setScoreboard] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
@@ -188,11 +188,15 @@ export function LiveWidget() {
   }, [uconnGames]);
 
   const getGameStatus = (status: any) => {
-    if (status.type.completed) return "Final";
-    if (status.type.state === "in") {
-      return `${status.displayClock} - ${status.type.shortDetail}`;
+    if (status?.type?.completed) return "Final";
+    const clock = status?.displayClock;
+    const shortDetail = status?.type?.shortDetail || "";
+    if (status?.type?.state === "in") {
+      if (clock && shortDetail.includes(clock)) return shortDetail;
+      if (shortDetail) return [clock, shortDetail].filter(Boolean).join(" - ");
+      return clock || "In Progress";
     }
-    return status.type.shortDetail;
+    return shortDetail || status?.type?.detail || status?.type?.description || "";
   };
 
   const getTeamStats = (eventId: string, teamId: string) => {
@@ -274,28 +278,37 @@ export function LiveWidget() {
             const isHomeHigher = homeScore > awayScore;
             const isAwayHigher = awayScore > homeScore;
 
+            const awayLogo =
+              awayTeam?.team?.logos?.[0]?.href || awayTeam?.team?.logo || null;
+            const homeLogo =
+              homeTeam?.team?.logos?.[0]?.href || homeTeam?.team?.logo || null;
+
+            const matchupLabel = `${awayTeam?.team?.displayName || "Away"} vs ${
+              homeTeam?.team?.displayName || "Home"
+            }`;
+
             return (
               <Card key={game.id} className={isLive ? "border-primary" : ""}>
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <CardTitle>{game.name}</CardTitle>
-                    <Badge variant={isLive ? "default" : "secondary"}>
+                <CardContent className="space-y-4 pt-4">
+                  <div className="flex justify-end">
+                    <Badge
+                      variant={isLive ? "default" : "secondary"}
+                      className="px-4 py-2 text-sm font-semibold"
+                    >
                       {getGameStatus(game.status)}
                     </Badge>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                      {awayTeam?.team?.logos?.[0]?.href && (
+                      {awayLogo && (
                         <img
-                          src={awayTeam.team.logos[0].href}
+                          src={awayLogo}
                           alt={awayTeam.team.displayName}
-                          className="h-10 w-10 rounded-[10px] object-contain"
+                          className="h-12 w-12 rounded-[10px] object-contain"
                         />
                       )}
                       <div className="flex flex-col">
-                        <span className="text-xl font-bold">
+                        <span className="text-2xl font-bold">
                           {awayTeam?.team.abbreviation}
                         </span>
                         <span className="text-sm text-muted-foreground">
@@ -304,7 +317,7 @@ export function LiveWidget() {
                       </div>
                     </div>
                     <span
-                      className={`text-3xl font-bold ${
+                      className={`text-4xl font-bold ${
                         isAwayHigher
                           ? "text-emerald-400"
                           : isHomeHigher
@@ -317,15 +330,15 @@ export function LiveWidget() {
                   </div>
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                      {homeTeam?.team?.logos?.[0]?.href && (
+                      {homeLogo && (
                         <img
-                          src={homeTeam.team.logos[0].href}
+                          src={homeLogo}
                           alt={homeTeam.team.displayName}
-                          className="h-10 w-10 rounded-[10px] object-contain"
+                          className="h-12 w-12 rounded-[10px] object-contain"
                         />
                       )}
                       <div className="flex flex-col">
-                        <span className="text-xl font-bold">
+                        <span className="text-2xl font-bold">
                           {homeTeam?.team.abbreviation}
                         </span>
                         <span className="text-sm text-muted-foreground">
@@ -334,7 +347,7 @@ export function LiveWidget() {
                       </div>
                     </div>
                     <span
-                      className={`text-3xl font-bold ${
+                      className={`text-4xl font-bold ${
                         isHomeHigher
                           ? "text-emerald-400"
                           : isAwayHigher
@@ -347,9 +360,9 @@ export function LiveWidget() {
                   </div>
 
                   {uStats && oppStats && (
-                    <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground mt-3">
-                      <div>
-                        <p className="font-semibold text-foreground">
+                    <div className="grid grid-cols-2 gap-3 text-base text-foreground mt-3">
+                      <div className="space-y-1">
+                        <p className="font-semibold">
                           {homeTeam?.team?.abbreviation === "CONN"
                             ? "UConn"
                             : homeTeam?.team?.abbreviation}
@@ -361,8 +374,8 @@ export function LiveWidget() {
                         <p>AST: {homeTeam?.team?.id === uTeamId ? uStats.ast ?? "—" : oppStats.ast ?? "—"}</p>
                         <p>TO: {homeTeam?.team?.id === uTeamId ? uStats.to ?? "—" : oppStats.to ?? "—"}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-foreground">
+                      <div className="text-right space-y-1">
+                        <p className="font-semibold">
                           {awayTeam?.team?.abbreviation === "CONN"
                             ? "UConn"
                             : awayTeam?.team?.abbreviation}
