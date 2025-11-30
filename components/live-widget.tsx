@@ -145,14 +145,22 @@ export function LiveWidget() {
     setMounted(true);
   }, []);
 
-  const uconnGames = scoreboard?.events
-    ?.filter((event: any) =>
+  const uconnGames = (scoreboard?.events || [])
+    .filter((event: any) =>
       event.competitions?.[0]?.competitors?.some(
         (team: any) => team.team.id === "41"
       )
     )
-    ?.filter((event: any) => !bannedMatchups.includes(event.shortName));
-  const displayGames = uconnGames || [];
+    .filter((event: any) => !bannedMatchups.includes(event.shortName));
+
+  const todayStr = new Date().toDateString();
+  const todayUpcoming = (upcoming || []).filter((event: any) => {
+    const d = new Date(event.date);
+    return d.toDateString() === todayStr;
+  });
+
+  const displayGames =
+    (uconnGames && uconnGames.length > 0 ? uconnGames : todayUpcoming) || [];
 
   useEffect(() => {
     const fetchSummaries = async () => {
