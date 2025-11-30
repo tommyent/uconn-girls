@@ -1131,7 +1131,8 @@ export default function HistoryPage() {
                     >
                       <CardHeader className="pb-4 space-y-3">
                         <div className="text-center text-sm font-semibold text-foreground">
-                          {new Date(event.date).toLocaleDateString("en-US", {
+                          {new Date(event.date).toLocaleString("en-US", {
+                            timeZone: "America/New_York",
                             weekday: "short",
                             month: "short",
                             day: "numeric",

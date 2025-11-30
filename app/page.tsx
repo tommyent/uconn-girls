@@ -140,7 +140,8 @@ export default async function Home() {
                   <p className="sr-only">{nextEvent.shortName}</p>
                 )}
                 <p className="text-muted-foreground">
-                  {new Date(nextEvent.date).toLocaleDateString("en-US", {
+                  {new Date(nextEvent.date).toLocaleString("en-US", {
+                    timeZone: "America/New_York",
                     weekday: "short",
                     month: "short",
                     day: "numeric",
