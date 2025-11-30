@@ -95,7 +95,6 @@ export default function HistoryPage() {
   );
   const [scoreboardLoading, setScoreboardLoading] = useState(false);
   const [activeTabs, setActiveTabs] = useState<Record<string, string>>({});
-  const [coverageNetworks, setCoverageNetworks] = useState<Record<string, string[]>>({});
 
   const years = Array.from({ length: 5 }, (_, i) => currentSeasonYear - i);
 
@@ -177,53 +176,6 @@ export default function HistoryPage() {
     return Array.from(new Set(names));
   };
 
-  const fetchCoverageNetworks = async (
-    eventId: string,
-    eventDate: string,
-    opponentName: string
-  ) => {
-    try {
-      const date = new Date(eventDate);
-      const yyyy = date.getFullYear();
-      const mm = String(date.getMonth() + 1).padStart(2, "0");
-      const dd = String(date.getDate()).padStart(2, "0");
-      const coverageUrl = `https://uconnhuskies.com/coverage?page=1&date=${yyyy}-${mm}-${dd}`;
-      const res = await fetch(coverageUrl);
-      if (!res.ok) return;
-      const html = await res.text();
-      const doc = new DOMParser().parseFromString(html, "text/html");
-      const rows = Array.from(doc.querySelectorAll("tr"));
-      const nets: string[] = [];
-      rows.forEach((row) => {
-        const cells = row.querySelectorAll("td");
-        if (cells.length < 4) return;
-        const sport = cells[1]?.textContent?.toLowerCase() || "";
-        if (!sport.includes("women")) return;
-        const opponent = cells[2]?.textContent?.trim().toLowerCase() || "";
-        if (
-          opponentName &&
-          opponent &&
-          !opponentName.toLowerCase().includes(opponent) &&
-          !opponent.includes(opponentName.toLowerCase())
-        )
-          return;
-        const tv = cells[3]?.textContent?.trim() || "";
-        if (tv) {
-          tv
-            .split(/[\/,&]/)
-            .map((t) => t.trim())
-            .filter(Boolean)
-            .forEach((t) => nets.push(t));
-        }
-      });
-      if (nets.length > 0) {
-        setCoverageNetworks((prev) => ({ ...prev, [eventId]: Array.from(new Set(nets)) }));
-      }
-    } catch {
-      // ignore failures
-    }
-  };
-
   useEffect(() => {
     fetchSchedule(selectedYear);
   }, [selectedYear]);
@@ -238,28 +190,6 @@ export default function HistoryPage() {
     );
     if (cachedPlayers) setScoreboardPlayers(cachedPlayers);
   }, [selectedYear]);
-
-  useEffect(() => {
-    const prefetchCoverage = async () => {
-      if (!schedule?.events) return;
-      const upcomingOnly = schedule.events.filter(
-        (event: any) => !event.competitions?.[0]?.status?.type?.completed
-      );
-      for (const event of upcomingOnly) {
-        const competition = event?.competitions?.[0];
-        if (!competition) continue;
-        const nets = getNetworks(competition);
-        if (nets && nets.length > 0) continue;
-        const opponent = competition.competitors?.find(
-          (c: any) => c.team?.id !== "41"
-        );
-        const opponentName = opponent?.team?.displayName || "";
-        await fetchCoverageNetworks(event.id, event.date, opponentName);
-      }
-    };
-    prefetchCoverage();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schedule]);
 
   // Fetch per-game summaries (boxscore stats)
   useEffect(() => {
@@ -1117,10 +1047,6 @@ export default function HistoryPage() {
                     (c: any) => c.team.id !== "41"
                   );
                   const networks = getNetworks(competition);
-                  const mergedNetworks =
-                    networks.length > 0
-                      ? networks
-                      : coverageNetworks[event.id] || [];
 
                 if (!opponent) return null;
 
@@ -1196,8 +1122,8 @@ export default function HistoryPage() {
                             <span className="text-xs font-semibold uppercase text-muted-foreground">
                               Watch on
                             </span>
-                            {mergedNetworks.length > 0 ? (
-                              Array.from(new Set(mergedNetworks)).map((n) => (
+                            {networks.length > 0 ? (
+                              Array.from(new Set(networks)).map((n) => (
                                 <span key={n} className="inline-flex items-center">
                                   {NETWORK_LOGOS[n] ? (
                                     <img

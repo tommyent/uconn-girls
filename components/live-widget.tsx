@@ -52,54 +52,6 @@ export function LiveWidget() {
   const [summaries, setSummaries] = useState<Record<string, any>>({});
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [coverageNetworks, setCoverageNetworks] = useState<Record<string, string[]>>({});
-
-  const fetchCoverageNetworks = async (
-    eventId: string,
-    eventDate: string,
-    opponentName: string
-  ) => {
-    try {
-      const date = new Date(eventDate);
-      const yyyy = date.getFullYear();
-      const mm = String(date.getMonth() + 1).padStart(2, "0");
-      const dd = String(date.getDate()).padStart(2, "0");
-      const coverageUrl = `https://uconnhuskies.com/coverage?page=1&date=${yyyy}-${mm}-${dd}`;
-      const res = await fetch(coverageUrl);
-      if (!res.ok) return;
-      const html = await res.text();
-      const doc = new DOMParser().parseFromString(html, "text/html");
-      const rows = Array.from(doc.querySelectorAll("tr"));
-      const nets: string[] = [];
-      rows.forEach((row) => {
-        const cells = row.querySelectorAll("td");
-        if (cells.length < 4) return;
-        const sport = cells[1]?.textContent?.toLowerCase() || "";
-        if (!sport.includes("women")) return;
-        const opponent = cells[2]?.textContent?.trim().toLowerCase() || "";
-        if (
-          opponentName &&
-          opponent &&
-          !opponentName.toLowerCase().includes(opponent) &&
-          !opponent.includes(opponentName.toLowerCase())
-        )
-          return;
-        const tv = cells[3]?.textContent?.trim() || "";
-        if (tv) {
-          tv
-            .split(/[\/,&]/)
-            .map((t) => t.trim())
-            .filter(Boolean)
-            .forEach((t) => nets.push(t));
-        }
-      });
-      if (nets.length > 0) {
-        setCoverageNetworks((prev) => ({ ...prev, [eventId]: Array.from(new Set(nets)) }));
-      }
-    } catch {
-      // ignore failures; UI will fallback to existing networks
-    }
-  };
 
   const fetchScores = async () => {
     try {
@@ -192,25 +144,6 @@ export function LiveWidget() {
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  useEffect(() => {
-    // backfill coverage networks for upcoming games missing broadcasts
-    (async () => {
-      if (!upcoming || upcoming.length === 0) return;
-      for (const event of upcoming) {
-        const competition = event?.competitions?.[0];
-        if (!competition) continue;
-        const nets = getNetworks(competition);
-        if (nets && nets.length > 0) continue;
-        const opponent = competition.competitors?.find(
-          (c: any) => c.team?.id !== "41"
-        );
-        const opponentName = opponent?.team?.displayName || "";
-        await fetchCoverageNetworks(event.id, event.date, opponentName);
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [upcoming]);
 
   const uconnGames = scoreboard?.events
     ?.filter((event: any) =>
@@ -488,12 +421,6 @@ export function LiveWidget() {
               const isHome = uconnTeam.homeAway === "home";
               const venue = competition.venue?.fullName;
               const networks = getNetworks(competition);
-              const mergedNetworks =
-                networks.length > 0
-                  ? networks
-                  : coverageNetworks[competition.id] ||
-                    coverageNetworks[event.id] ||
-                    [];
             return (
                 <Card
                   key={event.id}
@@ -559,8 +486,8 @@ export function LiveWidget() {
                         <span className="text-xs font-semibold uppercase text-muted-foreground">
                           Watch on
                         </span>
-                        {mergedNetworks.length > 0 ? (
-                          mergedNetworks.map((n) => (
+                        {networks.length > 0 ? (
+                          networks.map((n) => (
                             <div key={n} className="inline-flex items-center">
                               {NETWORK_LOGOS[n] ? (
                                 <img
