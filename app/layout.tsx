@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { BottomNav } from "@/components/bottom-nav";
-import { RegisterServiceWorker } from "./register-sw";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export const metadata: Metadata = {
@@ -31,7 +30,6 @@ export default function RootLayout({
     <html lang="en">
       <body className="font-sans">
         <ThemeToggle />
-        <RegisterServiceWorker />
         <div className="pb-24">{children}</div>
         <BottomNav />
       </body>
