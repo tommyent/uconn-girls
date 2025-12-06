@@ -287,14 +287,15 @@ export function LiveWidget() {
       ) : displayGames && displayGames.length > 0 ? (
         <div className="space-y-4">
           {displayGames.map((game: any) => {
-            const competition = game.competitions[0];
-            const homeTeam = competition.competitors.find(
+            const competition = game.competitions?.[0];
+            if (!competition) return null;
+            const homeTeam = competition.competitors?.find(
               (c: any) => c.homeAway === "home"
             );
-            const awayTeam = competition.competitors.find(
+            const awayTeam = competition.competitors?.find(
               (c: any) => c.homeAway === "away"
             );
-            const isLive = game.status.type.state === "in";
+            const isLive = game.status?.type?.state === "in";
             const uTeamId = "41";
             const oppTeamId =
               homeTeam?.team?.id === uTeamId

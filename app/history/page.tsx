@@ -1039,11 +1039,12 @@ export default function HistoryPage() {
               <h2 className="text-3xl font-bold mb-6">Upcoming Games</h2>
               <div className="space-y-4">
                 {upcomingGames.map((event: any) => {
-                  const competition = event.competitions[0];
-                  const uconnTeam = competition.competitors.find(
+                  const competition = event.competitions?.[0];
+                  if (!competition) return null;
+                  const uconnTeam = competition.competitors?.find(
                     (c: any) => c.team.id === "41"
                   );
-                  const opponent = competition.competitors.find(
+                  const opponent = competition.competitors?.find(
                     (c: any) => c.team.id !== "41"
                   );
                   const networks = getNetworks(competition);
