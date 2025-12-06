@@ -1,13 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
+
+/* eslint-disable react-hooks/set-state-in-effect */
 
 type Theme = "light" | "dark";
 
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
+
+  const applyTheme = useCallback((next: Theme) => {
+    const root = document.documentElement;
+    if (next === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+  }, []);
 
   useEffect(() => {
     // Initialize theme from saved preference or system preference
@@ -17,16 +28,7 @@ export function ThemeToggle() {
     setTheme(initial);
     applyTheme(initial);
     setMounted(true);
-  }, []);
-
-  const applyTheme = (next: Theme) => {
-    const root = document.documentElement;
-    if (next === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-  };
+  }, [applyTheme]);
 
   const toggle = () => {
     const next = theme === "light" ? "dark" : "light";
@@ -66,3 +68,5 @@ export function ThemeToggle() {
     </button>
   );
 }
+
+/* eslint-enable react-hooks/set-state-in-effect */

@@ -27,9 +27,7 @@ export default async function Home() {
         <h1 className="text-5xl md:text-6xl font-bold text-primary mb-2">
           {team?.displayName || "UConn Huskies"}
         </h1>
-        <p className="text-xl text-muted-foreground">
-          Women's Basketball
-        </p>
+        <p className="text-xl text-muted-foreground">Women&apos;s Basketball</p>
       </div>
 
       {/* Current Record */}
