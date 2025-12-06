@@ -127,11 +127,12 @@ export default function LivePage() {
   }, [uconnGames]);
 
   const getGameStatus = (status: any) => {
+    if (!status?.type) return "TBD";
     if (status.type.completed) return "Final";
     if (status.type.state === "in") {
-      return `${status.displayClock} - ${status.type.shortDetail}`;
+      return `${status.displayClock ?? ""} ${status.type.shortDetail ?? ""}`.trim();
     }
-    return status.type.shortDetail;
+    return status.type.shortDetail || "Scheduled";
   };
 
   const getTeamStats = (eventId: string, teamId: string) => {
@@ -195,14 +196,15 @@ export default function LivePage() {
         <div className="space-y-6">
           <h2 className="text-3xl font-bold">UConn Games</h2>
           {uconnGames.map((game: any) => {
-            const competition = game.competitions[0];
-            const homeTeam = competition.competitors.find(
+            const competition = game.competitions?.[0];
+            const homeTeam = competition?.competitors?.find(
               (c: any) => c.homeAway === "home"
             );
-            const awayTeam = competition.competitors.find(
+            const awayTeam = competition?.competitors?.find(
               (c: any) => c.homeAway === "away"
             );
-            const isLive = game.status.type.state === "in";
+            const status = game.status?.type;
+            const isLive = status?.state === "in";
             const uTeamId = "41";
             const oppTeamId =
               homeTeam?.team?.id === uTeamId
