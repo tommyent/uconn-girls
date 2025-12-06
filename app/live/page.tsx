@@ -84,11 +84,10 @@ export default function LivePage() {
   }, []);
 
   const uconnGames = scoreboard?.events?.filter((event: any) => {
-    return (
-      event.competitions[0].competitors.some(
-        (team: any) => team.team.id === "41"
-      )
-    );
+    const competition = event?.competitions?.[0];
+    const competitors = competition?.competitors;
+    if (!Array.isArray(competitors)) return false;
+    return competitors.some((team: any) => team?.team?.id === "41");
   });
 
   useEffect(() => {
