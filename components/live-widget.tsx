@@ -168,20 +168,8 @@ export function LiveWidget() {
     )
     .filter((event: any) => !bannedMatchups.includes(event.shortName));
 
-  const todayStr = new Date().toDateString();
-  const todayUpcoming = (upcoming || []).filter((event: any) => {
-    const d = new Date(event.date);
-    return d.toDateString() === todayStr;
-  });
-
-  const displayGames =
-    (uconnGames && uconnGames.length > 0
-      ? uconnGames
-      : todayUpcoming.length > 0
-      ? todayUpcoming
-      : upcoming && upcoming.length > 0
-      ? upcoming.slice(0, 1)
-      : []) || [];
+  // Only show games in Live section if they're actually live or completed (from scoreboard)
+  const displayGames = uconnGames || [];
 
   useEffect(() => {
     const fetchSummaries = async () => {
